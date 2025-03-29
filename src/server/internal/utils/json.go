@@ -2,24 +2,37 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
-func WriteJSON(w http.ResponseWriter, status int, v any) error {
-	w.Header().Add("Content-Type", "application/json")
+func writeJSON(w http.ResponseWriter, status int, data any) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	return json.NewEncoder(w).Encode(v)
+	return json.NewEncoder(w).Encode(data)
 }
 
-func WriteError(w http.ResponseWriter, status int, err error) {
-	WriteJSON(w, status, map[string]string{"error": err.Error()})
+func readJSON(w http.ResponseWriter, r *http.Request, data any) error {
+	maxBytes := 1_048_578 // 1mb
+	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	return decoder.Decode(data)
 }
 
-func ParseJSON(r *http.Request, v any) error {
-	if r.Body == nil {
-		return fmt.Errorf("missing request body")
+func WriteJSONError(w http.ResponseWriter, status int, message string) error {
+	type envelope struct {
+		Error string `json:"error"`
 	}
 
-	return json.NewDecoder(r.Body).Decode(v)
+	return writeJSON(w, status, &envelope{Error: message})
+}
+
+func JsonResponse(w http.ResponseWriter, status int, data any) error {
+	type envelope struct {
+		Data any `json:"data"`
+	}
+
+	return writeJSON(w, status, &envelope{Data: data})
 }

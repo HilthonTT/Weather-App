@@ -5,18 +5,24 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/hilthontt/weather/internal/utils"
+	"github.com/hilthontt/weather/services/weather"
 )
 
 type application struct {
-	config config
+	config        config
+	weatherClient weather.Client
 }
 
 type config struct {
-	addr string
+	addr        string
+	openWeather openWeatherConfig
+}
+
+type openWeatherConfig struct {
+	apiKey string
 }
 
 func (app *application) mount() http.Handler {
@@ -40,9 +46,8 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Get("/test", func(w http.ResponseWriter, r *http.Request) {
-			utils.WriteJSON(w, http.StatusOK, "Ok!")
-		})
+		weatherHandler := weather.NewHandler(app.weatherClient)
+		weatherHandler.RegisterRoutes(r)
 	})
 
 	return r
