@@ -8,17 +8,20 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/hilthontt/weather/internal/ratelimiter"
 	"github.com/hilthontt/weather/services/weather"
 )
 
 type application struct {
 	config        config
 	weatherClient weather.Client
+	rateLimiter   ratelimiter.Limiter
 }
 
 type config struct {
 	addr        string
 	openWeather openWeatherConfig
+	rateLimiter ratelimiter.Config
 }
 
 type openWeatherConfig struct {
