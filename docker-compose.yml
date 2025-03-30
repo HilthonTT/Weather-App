@@ -1,21 +1,9 @@
 services:
-  db:
-    image: postgres:latest
-    container_name: postgres-db
+  weathers-mongo:
+    image: "mongo:7.0.8"
+    restart: always
     environment:
-      POSTGRES_DB: weather
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: adminpassword
-    networks:
-      - backend
-    volumes:
-      - db-data:/var/lib/postgresql/data
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
     ports:
-      - "5432:5432"
-
-volumes:
-  db-data:
-
-networks:
-  backend:
-    driver: bridge
+      - 27017:27017

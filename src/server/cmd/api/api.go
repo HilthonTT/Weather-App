@@ -26,6 +26,7 @@ type application struct {
 	weatherClient weather.Client
 	rateLimiter   ratelimiter.Limiter
 	logger        *zap.SugaredLogger
+	weatherStore  *weather.Store
 }
 
 func (app *application) mount() http.Handler {

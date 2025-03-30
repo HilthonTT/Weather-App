@@ -1,17 +1,9 @@
 package types
 
 type WeatherResponse struct {
-	Coord struct {
-		Lon float64 `json:"lon"`
-		Lat float64 `json:"lat"`
-	} `json:"coord"`
-	Weather []struct {
-		ID          int    `json:"id"`
-		Main        string `json:"main"`
-		Description string `json:"description"`
-		Icon        string `json:"icon"`
-	} `json:"weather"`
-	Main struct {
+	Coord   Coord     `json:"coord"`
+	Weather []Weather `json:"weather"`
+	Main    struct {
 		Temp      float64 `json:"temp"`
 		FeelsLike float64 `json:"feels_like"`
 		TempMin   float64 `json:"temp_min"`
@@ -21,17 +13,11 @@ type WeatherResponse struct {
 		SeaLevel  int     `json:"sea_level"`
 		GrndLevel int     `json:"grnd_level"`
 	} `json:"main"`
-	Visibility int `json:"visibility"`
-	Wind       struct {
-		Speed float64 `json:"speed"`
-		Deg   int     `json:"deg"`
-		Gust  float64 `json:"gust"`
-	} `json:"wind"`
-	Clouds struct {
-		All int `json:"all"`
-	} `json:"clouds"`
-	Dt  int64 `json:"dt"` // Timestamp
-	Sys struct {
+	Visibility int    `json:"visibility"`
+	Wind       Wind   `json:"wind"`
+	Clouds     Clouds `json:"clouds"`
+	Dt         int64  `json:"dt"` // Timestamp
+	Sys        struct {
 		Country string `json:"country"`
 		Sunrise int64  `json:"sunrise"`
 		Sunset  int64  `json:"sunset"`

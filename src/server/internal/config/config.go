@@ -13,10 +13,17 @@ type Config struct {
 	OpenWeather OpenWeatherConfig
 	RateLimiter ratelimiter.Config
 	Env         string
+	Db          DbConfig
 }
 
 type OpenWeatherConfig struct {
 	ApiKey string
+}
+
+type DbConfig struct {
+	MongoUser     string
+	MongoPassword string
+	MongoAddr     string
 }
 
 func NewConfig() *Config {
@@ -30,6 +37,11 @@ func NewConfig() *Config {
 			RequestsPerTimeFrame: env.GetInt("RATELIMITER_REQUESTS_COUNT", 20),
 			TimeFrame:            time.Second * 5,
 			Enabled:              env.GetBool("RATE_LIMITER_ENABLED", true),
+		},
+		Db: DbConfig{
+			MongoUser:     env.GetString("MONGO_DB_USER", "root"),
+			MongoPassword: env.GetString("MONGO_DB_PASS", "example"),
+			MongoAddr:     env.GetString("MONGO_DB_HOST", "localhost:27017"),
 		},
 	}
 }
