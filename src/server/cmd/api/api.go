@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,9 +13,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/hilthontt/weather/docs"
 	"github.com/hilthontt/weather/internal/config"
 	"github.com/hilthontt/weather/internal/ratelimiter"
 	"github.com/hilthontt/weather/services/weather"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"go.uber.org/zap"
 )
 
@@ -50,6 +53,9 @@ func (app *application) mount() http.Handler {
 	}
 
 	r.Route("/v1", func(r chi.Router) {
+		docsURL := fmt.Sprintf("%s/swagger/doc.json", app.config.Addr)
+		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
+
 		weatherHandler := weather.NewHandler(app.weatherClient)
 		weatherHandler.RegisterRoutes(r, app.logger)
 	})
@@ -58,6 +64,10 @@ func (app *application) mount() http.Handler {
 }
 
 func (app *application) run(mux http.Handler) error {
+	docs.SwaggerInfo.Version = version
+	docs.SwaggerInfo.Host = app.config.ApiURL
+	docs.SwaggerInfo.BasePath = "/v1"
+
 	srv := &http.Server{
 		Addr:         app.config.Addr,
 		Handler:      mux,
