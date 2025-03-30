@@ -14,6 +14,7 @@ type Config struct {
 	RateLimiter ratelimiter.Config
 	Env         string
 	Db          DbConfig
+	JaegerAddr  string
 }
 
 type OpenWeatherConfig struct {
@@ -28,8 +29,9 @@ type DbConfig struct {
 
 func NewConfig() *Config {
 	return &Config{
-		Addr:   env.GetString("ADDR", ":8080"),
-		ApiURL: env.GetString("EXTERNAL_URL", "localhost:8080"),
+		Addr:       env.GetString("ADDR", ":8080"),
+		ApiURL:     env.GetString("EXTERNAL_URL", "localhost:8080"),
+		JaegerAddr: env.GetString("JAEGER_ADDR", "localhost:4318"),
 		OpenWeather: OpenWeatherConfig{
 			ApiKey: env.GetString("OPEN_WEATHER_API_KEY", ""),
 		},

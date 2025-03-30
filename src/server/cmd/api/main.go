@@ -7,6 +7,7 @@ import (
 
 	"github.com/hilthontt/weather/internal/config"
 	"github.com/hilthontt/weather/internal/ratelimiter"
+	"github.com/hilthontt/weather/internal/tracer"
 	"github.com/hilthontt/weather/services/weather"
 	_ "github.com/joho/godotenv/autoload"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -39,6 +40,10 @@ func main() {
 
 	logger := zap.Must(zap.NewProduction()).Sugar()
 	defer logger.Sync()
+
+	if err := tracer.SetGlobalTracer(context.TODO(), cfg.JaegerAddr); err != nil {
+		logger.Fatal("could not set global tracer", zap.Error(err))
+	}
 
 	// Weather Client
 	weatherClient := weather.NewClient(cfg.OpenWeather.ApiKey)
