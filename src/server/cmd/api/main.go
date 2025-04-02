@@ -2,17 +2,16 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"time"
+	"expvar"
+	"runtime"
 
+	"github.com/go-redis/redis/v8"
+	"github.com/hilthontt/weather/internal/cache"
 	"github.com/hilthontt/weather/internal/config"
 	"github.com/hilthontt/weather/internal/ratelimiter"
 	"github.com/hilthontt/weather/internal/tracer"
 	"github.com/hilthontt/weather/services/weather"
 	_ "github.com/joho/godotenv/autoload"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.uber.org/zap"
 )
 
@@ -54,38 +53,30 @@ func main() {
 		cfg.RateLimiter.TimeFrame,
 	)
 
-	// MongoDB connection
-	uri := fmt.Sprintf("mongodb://%s:%s@%s", cfg.Db.MongoUser, cfg.Db.MongoPassword, cfg.Db.MongoAddr)
-	mongoClient, err := connectToMongoDB(uri)
-	if err != nil {
-		logger.Fatal("failed to connect to mongo db", zap.Error(err))
-	}
+	// Cache
+	var rdb *redis.Client
+	if cfg.RedisCfg.Enabled {
+		rdb = cache.NewRedisClient(cfg.RedisCfg.Addr, cfg.RedisCfg.Pw, cfg.RedisCfg.DB)
+		logger.Info("redis cache connection established")
 
-	weatherStore := weather.NewStore(mongoClient)
+		defer rdb.Close()
+	}
+	weatherCache := weather.NewWeatherCache(rdb)
 
 	app := &application{
 		config:        *cfg,
 		weatherClient: *weatherClient,
 		logger:        logger,
 		rateLimiter:   rateLimiter,
-		weatherStore:  weatherStore,
+		weatherCache:  weatherCache,
 	}
+
+	// Metrics collected
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
 
 	mux := app.mount()
 
 	logger.Fatal(app.run(mux))
-}
-
-func connectToMongoDB(uri string) (*mongo.Client, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
-	if err != nil {
-		return nil, err
-	}
-
-	err = client.Ping(ctx, readpref.Primary())
-
-	return client, err
 }

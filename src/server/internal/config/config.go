@@ -15,6 +15,7 @@ type Config struct {
 	Env         string
 	Db          DbConfig
 	JaegerAddr  string
+	RedisCfg    RedisConfig
 }
 
 type OpenWeatherConfig struct {
@@ -25,6 +26,13 @@ type DbConfig struct {
 	MongoUser     string
 	MongoPassword string
 	MongoAddr     string
+}
+
+type RedisConfig struct {
+	Addr    string
+	Pw      string
+	DB      int
+	Enabled bool
 }
 
 func NewConfig() *Config {
@@ -44,6 +52,12 @@ func NewConfig() *Config {
 			MongoUser:     env.GetString("MONGO_DB_USER", "root"),
 			MongoPassword: env.GetString("MONGO_DB_PASS", "example"),
 			MongoAddr:     env.GetString("MONGO_DB_HOST", "localhost:27017"),
+		},
+		RedisCfg: RedisConfig{
+			Addr:    env.GetString("REDIS_ADDR", "localhost:6379"),
+			Pw:      env.GetString("REDIS_PW", ""),
+			DB:      env.GetInt("REDIS_DB", 0),
+			Enabled: env.GetBool("REDIS_ENABLED", true),
 		},
 	}
 }

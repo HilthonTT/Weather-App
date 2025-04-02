@@ -26,7 +26,7 @@ type application struct {
 	weatherClient weather.Client
 	rateLimiter   ratelimiter.Limiter
 	logger        *zap.SugaredLogger
-	weatherStore  *weather.Store
+	weatherCache  *weather.WeatherCache
 }
 
 func (app *application) mount() http.Handler {
@@ -58,7 +58,7 @@ func (app *application) mount() http.Handler {
 		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
 
 		weatherHandler := weather.NewHandler(app.weatherClient)
-		weatherHandler.RegisterRoutes(r, app.logger)
+		weatherHandler.RegisterRoutes(r, app.logger, app.weatherCache)
 	})
 
 	return r
