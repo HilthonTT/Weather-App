@@ -13,26 +13,20 @@ import (
 
 type Handler struct {
 	client Client
+	logger *zap.SugaredLogger
+	cache  *WeatherCache
 }
 
-func NewHandler(client Client) *Handler {
-	return &Handler{client}
+func NewHandler(client Client, logger *zap.SugaredLogger, cache *WeatherCache) *Handler {
+	return &Handler{client, logger, cache}
 }
 
-func (h *Handler) RegisterRoutes(r chi.Router, logger *zap.SugaredLogger, weatherCache *WeatherCache) {
-	r.Get("/weather/{city}", func(w http.ResponseWriter, r *http.Request) {
-		h.handleGetWeatherByCity(w, r, logger, weatherCache)
-	})
-	r.Get("/weather/coords/{latitude}/{longitude}", func(w http.ResponseWriter, r *http.Request) {
-		h.handleGetWeatherByCoordinates(w, r, logger, weatherCache)
-	})
+func (h *Handler) RegisterRoutes(r chi.Router) {
+	r.Get("/weather/{city}", h.handleGetWeatherByCity)
+	r.Get("/weather/coords/{latitude}/{longitude}", h.handleGetWeatherByCoordinates)
 
-	r.Get("/weather/forecast/{city}", func(w http.ResponseWriter, r *http.Request) {
-		h.handleGetForecast(w, r, logger, weatherCache)
-	})
-	r.Get("/weather/forecast/coords/{latitude}/{longitude}", func(w http.ResponseWriter, r *http.Request) {
-		h.handleGetForecastByCoordinates(w, r, logger, weatherCache)
-	})
+	r.Get("/weather/forecast/{city}", h.handleGetForecast)
+	r.Get("/weather/forecast/coords/{latitude}/{longitude}", h.handleGetForecastByCoordinates)
 }
 
 // GetWeatherByCity godoc
@@ -48,18 +42,13 @@ func (h *Handler) RegisterRoutes(r chi.Router, logger *zap.SugaredLogger, weathe
 //	@Failure		404		{object}	error
 //	@Failure		500		{object}	error
 //	@Router			/weather/{city} [get]
-func (h *Handler) handleGetWeatherByCity(
-	w http.ResponseWriter,
-	r *http.Request,
-	logger *zap.SugaredLogger,
-	weatherCache *WeatherCache,
-) {
+func (h *Handler) handleGetWeatherByCity(w http.ResponseWriter, r *http.Request) {
 	city := chi.URLParam(r, "city")
 
 	ctx := r.Context()
-	weather, err := weatherCache.GetWeatherCity(ctx, city)
+	weather, err := h.cache.GetWeatherCity(ctx, city)
 	if err != nil {
-		logger.Errorf("Error fetching weather from cache: %v", err)
+		h.logger.Errorf("Error fetching weather from cache: %v", err)
 	}
 
 	if weather != nil {
@@ -69,12 +58,12 @@ func (h *Handler) handleGetWeatherByCity(
 
 	weather, err = h.client.GetWeather(city)
 	if err != nil {
-		utils.BadRequestResponse(w, r, err, logger)
+		utils.BadRequestResponse(w, r, err, h.logger)
 		return
 	}
 
-	if err := weatherCache.SetWeather(ctx, weather); err != nil {
-		logger.Errorf("Error setting weather in cache: %v", err)
+	if err := h.cache.SetWeather(ctx, weather); err != nil {
+		h.logger.Errorf("Error setting weather in cache: %v", err)
 	}
 
 	utils.JsonResponse(w, http.StatusOK, weather)
@@ -94,31 +83,26 @@ func (h *Handler) handleGetWeatherByCity(
 //	@Failure		404			{object}	error
 //	@Failure		500			{object}	error
 //	@Router			/weather/coords/{latitude}/{longitude} [get]
-func (h *Handler) handleGetWeatherByCoordinates(
-	w http.ResponseWriter,
-	r *http.Request,
-	logger *zap.SugaredLogger,
-	weatherCache *WeatherCache,
-) {
+func (h *Handler) handleGetWeatherByCoordinates(w http.ResponseWriter, r *http.Request) {
 	latitudeStr := chi.URLParam(r, "latitude")
 	longitudeStr := chi.URLParam(r, "longitude")
 
 	latitude, err := strconv.ParseFloat(latitudeStr, 64)
 	if err != nil {
-		utils.BadRequestResponse(w, r, fmt.Errorf("invalid latitude: %s", latitudeStr), logger)
+		utils.BadRequestResponse(w, r, fmt.Errorf("invalid latitude: %s", latitudeStr), h.logger)
 		return
 	}
 
 	longitude, err := strconv.ParseFloat(longitudeStr, 64)
 	if err != nil {
-		utils.BadRequestResponse(w, r, fmt.Errorf("invalid longitude: %s", longitudeStr), logger)
+		utils.BadRequestResponse(w, r, fmt.Errorf("invalid longitude: %s", longitudeStr), h.logger)
 		return
 	}
 
 	ctx := r.Context()
-	weather, err := weatherCache.GetWeather(ctx, latitude, longitude)
+	weather, err := h.cache.GetWeather(ctx, latitude, longitude)
 	if err != nil {
-		logger.Errorf("Error fetching weather from cache: %v", err)
+		h.logger.Errorf("Error fetching weather from cache: %v", err)
 	}
 
 	if weather != nil {
@@ -128,12 +112,12 @@ func (h *Handler) handleGetWeatherByCoordinates(
 
 	weather, err = h.client.GetWeatherByCoords(latitude, longitude)
 	if err != nil {
-		utils.InternalServerError(w, r, err, logger)
+		utils.InternalServerError(w, r, err, h.logger)
 		return
 	}
 
-	if err := weatherCache.SetWeather(ctx, weather); err != nil {
-		logger.Errorf("Error setting weather in cache: %v", err)
+	if err := h.cache.SetWeather(ctx, weather); err != nil {
+		h.logger.Errorf("Error setting weather in cache: %v", err)
 	}
 
 	utils.JsonResponse(w, http.StatusOK, weather)
@@ -152,18 +136,13 @@ func (h *Handler) handleGetWeatherByCoordinates(
 //	@Failure		404		{object}	error
 //	@Failure		500		{object}	error
 //	@Router			/weather/forecast/{city} [get]
-func (h *Handler) handleGetForecast(
-	w http.ResponseWriter,
-	r *http.Request,
-	logger *zap.SugaredLogger,
-	weatherCache *WeatherCache,
-) {
+func (h *Handler) handleGetForecast(w http.ResponseWriter, r *http.Request) {
 	city := chi.URLParam(r, "city")
 
 	ctx := r.Context()
-	forecast, err := weatherCache.GetForecastByCity(ctx, city)
+	forecast, err := h.cache.GetForecastByCity(ctx, city)
 	if err != nil {
-		logger.Errorf("Error fetching forecast from cache: %v", err)
+		h.logger.Errorf("Error fetching forecast from cache: %v", err)
 	}
 
 	if forecast != nil {
@@ -173,12 +152,12 @@ func (h *Handler) handleGetForecast(
 
 	forecast, err = h.client.GetForecast(city)
 	if err != nil {
-		utils.InternalServerError(w, r, err, logger)
+		utils.InternalServerError(w, r, err, h.logger)
 		return
 	}
 
-	if err := weatherCache.SetForecast(ctx, forecast); err != nil {
-		logger.Errorf("Error setting forecast in cache: %v", err)
+	if err := h.cache.SetForecast(ctx, forecast); err != nil {
+		h.logger.Errorf("Error setting forecast in cache: %v", err)
 	}
 
 	utils.JsonResponse(w, http.StatusOK, forecast)
@@ -198,32 +177,27 @@ func (h *Handler) handleGetForecast(
 //	@Failure		404			{object}	error
 //	@Failure		500			{object}	error
 //	@Router			/weather/forecast/coords/{latitude}/{longitude} [get]
-func (h *Handler) handleGetForecastByCoordinates(
-	w http.ResponseWriter,
-	r *http.Request,
-	logger *zap.SugaredLogger,
-	weatherCache *WeatherCache,
-) {
+func (h *Handler) handleGetForecastByCoordinates(w http.ResponseWriter, r *http.Request) {
 	latitudeStr := chi.URLParam(r, "latitude")
 	longitudeStr := chi.URLParam(r, "longitude")
 
 	latitude, err := strconv.ParseFloat(latitudeStr, 64)
 	if err != nil {
-		utils.BadRequestResponse(w, r, fmt.Errorf("invalid latitude: %s", latitudeStr), logger)
+		utils.BadRequestResponse(w, r, fmt.Errorf("invalid latitude: %s", latitudeStr), h.logger)
 		return
 	}
 
 	longitude, err := strconv.ParseFloat(longitudeStr, 64)
 	if err != nil {
-		utils.BadRequestResponse(w, r, fmt.Errorf("invalid longitude: %s", longitudeStr), logger)
+		utils.BadRequestResponse(w, r, fmt.Errorf("invalid longitude: %s", longitudeStr), h.logger)
 		return
 	}
 
 	ctx := r.Context()
 
-	forecast, err := weatherCache.GetForecast(ctx, latitude, longitude)
+	forecast, err := h.cache.GetForecast(ctx, latitude, longitude)
 	if err != nil {
-		logger.Errorf("Error fetching forecast from cache: %v", err)
+		h.logger.Errorf("Error fetching forecast from cache: %v", err)
 	}
 	if forecast != nil {
 
@@ -233,12 +207,12 @@ func (h *Handler) handleGetForecastByCoordinates(
 
 	forecast, err = h.client.GetForecastByCoords(latitude, longitude)
 	if err != nil {
-		utils.InternalServerError(w, r, err, logger)
+		utils.InternalServerError(w, r, err, h.logger)
 		return
 	}
 
-	if err := weatherCache.SetForecast(ctx, forecast); err != nil {
-		logger.Errorf("Error setting forecast in cache: %v", err)
+	if err := h.cache.SetForecast(ctx, forecast); err != nil {
+		h.logger.Errorf("Error setting forecast in cache: %v", err)
 	}
 
 	utils.JsonResponse(w, http.StatusOK, forecast)

@@ -16,6 +16,7 @@ type Config struct {
 	Db          DbConfig
 	JaegerAddr  string
 	RedisCfg    RedisConfig
+	Auth        AuthConfig
 }
 
 type OpenWeatherConfig struct {
@@ -33,6 +34,22 @@ type RedisConfig struct {
 	Pw      string
 	DB      int
 	Enabled bool
+}
+
+type AuthConfig struct {
+	Basic BasicConfig
+	Token TokenConfig
+}
+
+type BasicConfig struct {
+	User string
+	Pass string
+}
+
+type TokenConfig struct {
+	Secret string
+	Exp    time.Duration
+	Iss    string
 }
 
 func NewConfig() *Config {
@@ -58,6 +75,17 @@ func NewConfig() *Config {
 			Pw:      env.GetString("REDIS_PW", ""),
 			DB:      env.GetInt("REDIS_DB", 0),
 			Enabled: env.GetBool("REDIS_ENABLED", true),
+		},
+		Auth: AuthConfig{
+			Basic: BasicConfig{
+				User: env.GetString("AUTH_BASIC_USER", "admin"),
+				Pass: env.GetString("AUTH_BASIC_PASS", "admin"),
+			},
+			Token: TokenConfig{
+				Secret: env.GetString("AUTH_TOKEN_SECRET", "very-secret-key-do-not-share-pls-pls"),
+				Exp:    time.Hour * 24 * 3, // 3 days
+				Iss:    "weather",
+			},
 		},
 	}
 }

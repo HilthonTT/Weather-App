@@ -14,8 +14,10 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/hilthontt/weather/docs"
+	"github.com/hilthontt/weather/internal/auth"
 	"github.com/hilthontt/weather/internal/config"
 	"github.com/hilthontt/weather/internal/ratelimiter"
+	"github.com/hilthontt/weather/services/users"
 	"github.com/hilthontt/weather/services/weather"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"go.uber.org/zap"
@@ -27,6 +29,9 @@ type application struct {
 	rateLimiter   ratelimiter.Limiter
 	logger        *zap.SugaredLogger
 	weatherCache  *weather.WeatherCache
+	authenticator auth.Authenticator
+	userStore     *users.UserStore
+	userCache     *users.UserCache
 }
 
 func (app *application) mount() http.Handler {
@@ -57,8 +62,11 @@ func (app *application) mount() http.Handler {
 		docsURL := fmt.Sprintf("%s/swagger/doc.json", app.config.Addr)
 		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
 
-		weatherHandler := weather.NewHandler(app.weatherClient)
-		weatherHandler.RegisterRoutes(r, app.logger, app.weatherCache)
+		weatherHandler := weather.NewHandler(app.weatherClient, app.logger, app.weatherCache)
+		weatherHandler.RegisterRoutes(r)
+
+		userHandler := users.NewHandler(app.logger)
+		userHandler.RegisterRoutes(r)
 	})
 
 	return r

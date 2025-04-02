@@ -34,6 +34,10 @@ type UserStore struct {
 	db *sql.DB
 }
 
+func NewUserStore(db *sql.DB) *UserStore {
+	return &UserStore{db}
+}
+
 func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 	query := `
 		INSERT INTO users (username, password, email, role_id) VALUES 
@@ -144,26 +148,12 @@ func (s *UserStore) GetByEmail(ctx context.Context, email string) (*User, error)
 }
 
 func (s *UserStore) Delete(ctx context.Context, userID int64) error {
-	return db.WithTx(s.db, ctx, func(tx *sql.Tx) error {
-		if err := s.delete(ctx, tx, userID); err != nil {
-			return err
-		}
-
-		// if err := s.deleteUserInvitations(ctx, tx, userID); err != nil {
-		// 	return err
-		// }
-
-		return nil
-	})
-}
-
-func (s *UserStore) delete(ctx context.Context, tx *sql.Tx, id int64) error {
 	query := `DELETE FROM users WHERE id = $1`
 
 	ctx, cancel := context.WithTimeout(ctx, db.QueryTimeoutDuration)
 	defer cancel()
 
-	_, err := tx.ExecContext(ctx, query, id)
+	_, err := s.db.ExecContext(ctx, query, userID)
 	if err != nil {
 		return err
 	}

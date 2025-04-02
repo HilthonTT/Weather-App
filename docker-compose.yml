@@ -24,3 +24,10 @@ services:
     ports:
       - "16686:16686"
       - "4318:4318"
+
+volumes:
+  db-data:
+
+networks:
+  backend:
+    driver: bridge
