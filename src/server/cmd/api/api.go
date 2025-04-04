@@ -65,7 +65,7 @@ func (app *application) mount() http.Handler {
 		weatherHandler := weather.NewHandler(app.weatherClient, app.logger, app.weatherCache)
 		weatherHandler.RegisterRoutes(r)
 
-		userHandler := users.NewHandler(app.logger)
+		userHandler := users.NewHandler(app.logger, app.userStore, app.config.Auth, app.authenticator)
 		userHandler.RegisterRoutes(r)
 	})
 

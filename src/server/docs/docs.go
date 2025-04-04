@@ -24,6 +24,94 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/users/login": {
+            "post": {
+                "description": "Authenticates a user with email and password, and returns a JWT token upon successful login",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Logs in a user",
+                "parameters": [
+                    {
+                        "description": "User login credentials",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/users.LoginUserPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "JWT token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/users/register": {
+            "post": {
+                "description": "Creates a new user account with a username, email, and password",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Registers a new user",
+                "parameters": [
+                    {
+                        "description": "New user registration data",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/users.RegisterUserPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created user object",
+                        "schema": {
+                            "$ref": "#/definitions/users.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/weather/coords/{latitude}/{longitude}": {
             "get": {
                 "description": "Fetches the current weather data for a specified latitude and longitude",
@@ -383,26 +471,13 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "clouds": {
-                    "type": "object",
-                    "properties": {
-                        "all": {
-                            "type": "integer"
-                        }
-                    }
+                    "$ref": "#/definitions/types.Clouds"
                 },
                 "cod": {
                     "type": "integer"
                 },
                 "coord": {
-                    "type": "object",
-                    "properties": {
-                        "lat": {
-                            "type": "number"
-                        },
-                        "lon": {
-                            "type": "number"
-                        }
-                    }
+                    "$ref": "#/definitions/types.Coord"
                 },
                 "dt": {
                     "description": "Timestamp",
@@ -463,36 +538,11 @@ const docTemplate = `{
                 "weather": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "description": {
-                                "type": "string"
-                            },
-                            "icon": {
-                                "type": "string"
-                            },
-                            "id": {
-                                "type": "integer"
-                            },
-                            "main": {
-                                "type": "string"
-                            }
-                        }
+                        "$ref": "#/definitions/types.Weather"
                     }
                 },
                 "wind": {
-                    "type": "object",
-                    "properties": {
-                        "deg": {
-                            "type": "integer"
-                        },
-                        "gust": {
-                            "type": "number"
-                        },
-                        "speed": {
-                            "type": "number"
-                        }
-                    }
+                    "$ref": "#/definitions/types.Wind"
                 }
             }
         },
@@ -507,6 +557,90 @@ const docTemplate = `{
                 },
                 "speed": {
                     "type": "number"
+                }
+            }
+        },
+        "users.LoginUserPayload": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 72,
+                    "minLength": 3
+                }
+            }
+        },
+        "users.RegisterUserPayload": {
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 72,
+                    "minLength": 3
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 100
+                }
+            }
+        },
+        "users.Role": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "level": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "users.User": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "role": {
+                    "$ref": "#/definitions/users.Role"
+                },
+                "role_id": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         }
