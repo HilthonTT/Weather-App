@@ -57,6 +57,7 @@ func NewConfig() *Config {
 		Addr:       env.GetString("ADDR", ":8080"),
 		ApiURL:     env.GetString("EXTERNAL_URL", "localhost:8080"),
 		JaegerAddr: env.GetString("JAEGER_ADDR", "localhost:4318"),
+		Env:        env.GetString("ENV", "development"),
 		OpenWeather: OpenWeatherConfig{
 			ApiKey: env.GetString("OPEN_WEATHER_API_KEY", ""),
 		},
@@ -87,5 +88,16 @@ func NewConfig() *Config {
 				Iss:    "weather",
 			},
 		},
+	}
+}
+
+func NewTestConfig() *Config {
+	return &Config{
+		RateLimiter: ratelimiter.Config{
+			RequestsPerTimeFrame: 20,
+			TimeFrame:            time.Second * 5,
+			Enabled:              true,
+		},
+		Addr: ":8080",
 	}
 }

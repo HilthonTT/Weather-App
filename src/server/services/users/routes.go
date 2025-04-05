@@ -47,7 +47,7 @@ type RegisterUserPayload struct {
 //
 //	@Summary		Registers a new user
 //	@Description	Creates a new user account with a username, email, and password
-//	@Tags				users
+//	@Tags			users
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body		RegisterUserPayload	true	"New user registration data"
@@ -95,7 +95,7 @@ type LoginUserPayload struct {
 //
 //	@Summary		Logs in a user
 //	@Description	Authenticates a user with email and password, and returns a JWT token upon successful login
-//	@Tags				users
+//	@Tags			users
 //	@Accept			json
 //	@Produce		json
 //	@Param			payload	body		LoginUserPayload	true	"User login credentials"

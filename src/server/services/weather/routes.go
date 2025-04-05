@@ -66,7 +66,9 @@ func (h *Handler) handleGetWeatherByCity(w http.ResponseWriter, r *http.Request)
 		h.logger.Errorf("Error setting weather in cache: %v", err)
 	}
 
-	utils.JsonResponse(w, http.StatusOK, weather)
+	if err := utils.JsonResponse(w, http.StatusOK, weather); err != nil {
+		utils.InternalServerError(w, r, err, h.logger)
+	}
 }
 
 // GetWeatherByCoordinates godoc
@@ -120,7 +122,9 @@ func (h *Handler) handleGetWeatherByCoordinates(w http.ResponseWriter, r *http.R
 		h.logger.Errorf("Error setting weather in cache: %v", err)
 	}
 
-	utils.JsonResponse(w, http.StatusOK, weather)
+	if err := utils.JsonResponse(w, http.StatusOK, weather); err != nil {
+		utils.InternalServerError(w, r, err, h.logger)
+	}
 }
 
 // GetForecastByCity godoc
@@ -160,7 +164,9 @@ func (h *Handler) handleGetForecast(w http.ResponseWriter, r *http.Request) {
 		h.logger.Errorf("Error setting forecast in cache: %v", err)
 	}
 
-	utils.JsonResponse(w, http.StatusOK, forecast)
+	if err := utils.JsonResponse(w, http.StatusOK, forecast); err != nil {
+		utils.InternalServerError(w, r, err, h.logger)
+	}
 }
 
 // GetForecastByCoordinates godoc
@@ -215,5 +221,7 @@ func (h *Handler) handleGetForecastByCoordinates(w http.ResponseWriter, r *http.
 		h.logger.Errorf("Error setting forecast in cache: %v", err)
 	}
 
-	utils.JsonResponse(w, http.StatusOK, forecast)
+	if err := utils.JsonResponse(w, http.StatusOK, forecast); err != nil {
+		utils.InternalServerError(w, r, err, h.logger)
+	}
 }
