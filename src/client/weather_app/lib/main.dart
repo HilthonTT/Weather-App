@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:weather_app/dependency_injection.dart';
+import 'package:weather_app/modules/weather/presentation/providers/get_weather_provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  initDependencies();
+
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 final class MyApp extends StatelessWidget {
@@ -20,48 +25,36 @@ final class MyApp extends StatelessWidget {
   }
 }
 
-final class MyHomePage extends StatefulWidget {
+final class MyHomePage extends ConsumerWidget {
   const MyHomePage({super.key, required this.title});
 
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final weatherData = ref.watch(getWeatherProvider);
 
-final class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+    return weatherData.when(
+      data: (weather) {
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+            title: Text(weather.name),
+          ),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[Text(weather.main.pressure.toString())],
             ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+          ),
+        );
+      },
+      error: (error, stackTrace) {
+        return Center(child: Text(error.toString()));
+      },
+      loading: () {
+        return const Center(child: CircularProgressIndicator());
+      },
     );
   }
 }

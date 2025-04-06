@@ -1,0 +1,37 @@
+import 'package:flutter/foundation.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:weather_app/common/errors/exceptions.dart';
+import 'package:weather_app/common/errors/failure.dart';
+import 'package:weather_app/modules/weather/data/datasources/weather_remote_datasource.dart';
+import 'package:weather_app/modules/weather/domain/entities/forecast.dart';
+import 'package:weather_app/modules/weather/domain/entities/weather.dart';
+import 'package:weather_app/modules/weather/domain/repositories/weather_repository.dart';
+
+@immutable
+final class WeatherRepositoryImpl implements WeatherRepository {
+  final WeatherRemoteDatasource weatherRemoteDatasource;
+
+  const WeatherRepositoryImpl({required this.weatherRemoteDatasource});
+
+  @override
+  Future<Either<Failure, ForecastResponse>> getForecast() async {
+    try {
+      final forecast = await weatherRemoteDatasource.getForecast();
+
+      return right(forecast);
+    } on ServerException catch (e) {
+      return left(Failure(e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, WeatherResponse>> getWeather() async {
+    try {
+      final weather = await weatherRemoteDatasource.getWeather();
+
+      return right(weather);
+    } on ServerException catch (e) {
+      return left(Failure(e.message));
+    }
+  }
+}

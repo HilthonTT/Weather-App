@@ -10,7 +10,6 @@ class Main {
   final int seaLevel;
   final int grndLevel;
   final int humidity;
-  final double tempKf;
 
   const Main({
     required this.temp,
@@ -21,6 +20,5 @@ class Main {
     required this.seaLevel,
     required this.grndLevel,
     required this.humidity,
-    required this.tempKf,
   });
 }

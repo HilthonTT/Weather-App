@@ -14,7 +14,7 @@ class WeatherResponse {
   final Wind wind;
   final Clouds clouds;
   final int dt;
-  final ForecastSys sys;
+  final WeatherSys sys;
   final int timezone;
   final String name;
   final int cod;
