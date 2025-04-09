@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:weather_app/common/constants/constants.dart';
 import 'package:weather_app/common/errors/exceptions.dart';
+import 'package:weather_app/modules/weather/data/datasources/location_local_data_source.dart';
 import 'package:weather_app/modules/weather/data/models/forecast_model.dart';
 import 'package:weather_app/modules/weather/data/models/weather_model.dart';
 
@@ -13,17 +14,19 @@ abstract interface class WeatherRemoteDatasource {
 
 @immutable
 final class WeatherRemoteDatasourceImpl implements WeatherRemoteDatasource {
-  const WeatherRemoteDatasourceImpl();
+  final LocationLocalDataSource locationLocalDataSource;
+
+  const WeatherRemoteDatasourceImpl({required this.locationLocalDataSource});
 
   static final _dio = Dio();
 
   @override
   Future<ForecastResponseModel> getForecast() async {
     try {
-      final latitude = 50;
-      final longitude = 50;
+      final position = await locationLocalDataSource.getPosition();
 
-      final url = '${Constants.apiUrl}/v1/forecast/coords/$latitude/$longitude';
+      final url =
+          '${Constants.apiUrl}/v1/weather/forecast/coords/${position.latitude}/${position.longitude}';
 
       final response = await _dio.get(url);
 
@@ -44,10 +47,10 @@ final class WeatherRemoteDatasourceImpl implements WeatherRemoteDatasource {
   @override
   Future<WeatherResponseModel> getWeather() async {
     try {
-      final latitude = 50;
-      final longitude = 50;
+      final position = await locationLocalDataSource.getPosition();
 
-      final url = '${Constants.apiUrl}/v1/weather/coords/$latitude/$longitude';
+      final url =
+          '${Constants.apiUrl}/v1/weather/coords/${position.latitude}/${position.longitude}';
 
       final response = await _dio.get(url);
 
