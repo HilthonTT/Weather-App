@@ -95,3 +95,41 @@ type Coord struct {
 	Lat float64 `json:"lat"`
 	Lon float64 `json:"lon"`
 }
+
+type OpenMeteoResponse struct {
+	Latitude             float64        `json:"latitude"`
+	Longitude            float64        `json:"longitude"`
+	GenerationTimeMs     float64        `json:"generationtime_ms"`
+	UTCOffsetSeconds     int            `json:"utc_offset_seconds"`
+	Timezone             string         `json:"timezone"`
+	TimezoneAbbreviation string         `json:"timezone_abbreviation"`
+	Elevation            float64        `json:"elevation"`
+	HourlyUnits          HourlyUnits    `json:"hourly_units"`
+	Hourly               HourlyForecast `json:"hourly"`
+	DailyUnits           DailyUnits     `json:"daily_units"`
+	Daily                DailyForecast  `json:"daily"`
+}
+
+type HourlyUnits struct {
+	Time          string `json:"time"`
+	Temperature2m string `json:"temperature_2m"`
+}
+
+type HourlyForecast struct {
+	Time          []string  `json:"time"`
+	Temperature2m []float64 `json:"temperature_2m"`
+}
+
+type DailyUnits struct {
+	Time            string `json:"time"`
+	WeatherCode     string `json:"weather_code"`
+	ApparentTempMax string `json:"apparent_temperature_max"`
+	ApparentTempMin string `json:"apparent_temperature_min"`
+}
+
+type DailyForecast struct {
+	Time            []string  `json:"time"`
+	WeatherCode     []int     `json:"weather_code"`
+	ApparentTempMax []float64 `json:"apparent_temperature_max"`
+	ApparentTempMin []float64 `json:"apparent_temperature_min"`
+}
