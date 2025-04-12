@@ -270,6 +270,57 @@
                 }
             }
         },
+        "/weather/open-meteo/coords/{latitude}/{longitude}": {
+            "get": {
+                "description": "Fetches the open meteo data for a specified latitude and longitude",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "weather"
+                ],
+                "summary": "Fetches open meteo by coordinates (latitude and longitude)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Latitude",
+                        "name": "latitude",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Longitude",
+                        "name": "longitude",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.OpenMeteoResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/weather/{city}": {
             "get": {
                 "description": "Fetches the current weather data for a specified city",
@@ -364,6 +415,52 @@
                 }
             }
         },
+        "types.DailyForecast": {
+            "type": "object",
+            "properties": {
+                "apparent_temperature_max": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "apparent_temperature_min": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "time": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "weather_code": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "types.DailyUnits": {
+            "type": "object",
+            "properties": {
+                "apparent_temperature_max": {
+                    "type": "string"
+                },
+                "apparent_temperature_min": {
+                    "type": "string"
+                },
+                "time": {
+                    "type": "string"
+                },
+                "weather_code": {
+                    "type": "string"
+                }
+            }
+        },
         "types.ForecastItem": {
             "type": "object",
             "properties": {
@@ -422,6 +519,34 @@
                 }
             }
         },
+        "types.HourlyForecast": {
+            "type": "object",
+            "properties": {
+                "temperature_2m": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "time": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "types.HourlyUnits": {
+            "type": "object",
+            "properties": {
+                "temperature_2m": {
+                    "type": "string"
+                },
+                "time": {
+                    "type": "string"
+                }
+            }
+        },
         "types.Main": {
             "type": "object",
             "properties": {
@@ -451,6 +576,44 @@
                 },
                 "temp_min": {
                     "type": "number"
+                }
+            }
+        },
+        "types.OpenMeteoResponse": {
+            "type": "object",
+            "properties": {
+                "daily": {
+                    "$ref": "#/definitions/types.DailyForecast"
+                },
+                "daily_units": {
+                    "$ref": "#/definitions/types.DailyUnits"
+                },
+                "elevation": {
+                    "type": "number"
+                },
+                "generationtime_ms": {
+                    "type": "number"
+                },
+                "hourly": {
+                    "$ref": "#/definitions/types.HourlyForecast"
+                },
+                "hourly_units": {
+                    "$ref": "#/definitions/types.HourlyUnits"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "timezone": {
+                    "type": "string"
+                },
+                "timezone_abbreviation": {
+                    "type": "string"
+                },
+                "utc_offset_seconds": {
+                    "type": "integer"
                 }
             }
         },

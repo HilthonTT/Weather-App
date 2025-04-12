@@ -15,10 +15,10 @@ final class MainModel extends Main {
   /// Create a [MainModel] from a JSON map
   factory MainModel.fromJson(Map<String, dynamic> json) {
     return MainModel(
-      temp: (json['temp'] as double).toDouble(),
-      feelsLike: (json['feels_like'] as double).toDouble(),
-      tempMin: (json['temp_min'] as double).toDouble(),
-      tempMax: (json['temp_max'] as double).toDouble(),
+      temp: (json['temp'] as num).toDouble(),
+      feelsLike: (json['feels_like'] as num).toDouble(),
+      tempMin: (json['temp_min'] as num).toDouble(),
+      tempMax: (json['temp_max'] as num).toDouble(),
       pressure: json['pressure'] as int,
       seaLevel: json['sea_level'] as int,
       grndLevel: json['grnd_level'] as int,

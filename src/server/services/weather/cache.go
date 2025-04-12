@@ -20,6 +20,7 @@ func NewWeatherCache(rdb *redis.Client) *WeatherCache {
 
 const WeatherExpTime = time.Hour * 24
 const ForecastExpTime = time.Hour * 24
+const OpenMeteoExpTime = time.Hour * 24
 
 func (c *WeatherCache) GetWeather(ctx context.Context, lat, lon float64) (*types.WeatherResponse, error) {
 	cacheKey := fmt.Sprintf("weather-%f-%f", lat, lon)
@@ -159,4 +160,41 @@ func (c *WeatherCache) DeleteForecast(ctx context.Context, lat, lon float64) err
 	cacheKey := fmt.Sprintf("forecast-%f-%f", lat, lon)
 
 	return c.rdb.Del(ctx, cacheKey).Err()
+}
+
+func (c *WeatherCache) GetOpenMeteo(ctx context.Context, lat, lon float64) (*types.OpenMeteoResponse, error) {
+	cacheKey := fmt.Sprintf("open-meteo-%f-%f", lat, lon)
+
+	data, err := c.rdb.Get(ctx, cacheKey).Result()
+	if err == redis.Nil {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	var openMeteo types.OpenMeteoResponse
+	if data != "" {
+		err := json.Unmarshal([]byte(data), &openMeteo)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &openMeteo, nil
+}
+
+func (c *WeatherCache) SetOpenMeteo(ctx context.Context, openMeteo *types.OpenMeteoResponse, lat, lon float64) error {
+	cacheKey := fmt.Sprintf("open-meteo-%f-%f", lat, lon)
+
+	json, err := json.Marshal(openMeteo)
+	if err != nil {
+		return err
+	}
+
+	err = c.rdb.SetEX(ctx, cacheKey, json, WeatherExpTime).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

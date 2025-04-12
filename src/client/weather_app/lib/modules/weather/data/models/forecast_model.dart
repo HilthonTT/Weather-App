@@ -72,7 +72,7 @@ final class ForecastItemModel extends ForecastItem {
       clouds: CloudsModel.fromJson(json['clouds'] as Map<String, dynamic>),
       wind: WindModel.fromJson(json['wind'] as Map<String, dynamic>),
       visibility: json['visibility'] as int,
-      pop: (json['pop'] as num).toDouble(),
+      pop: (json['pop'] as num?)?.toDouble() ?? 0.0,
       sys: ForecastSysModel.fromJson(json['sys'] as Map<String, dynamic>),
       dtTxt: json['dt_txt'] as String,
     );

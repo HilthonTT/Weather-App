@@ -27,6 +27,8 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 
 	r.Get("/weather/forecast/{city}", h.handleGetForecast)
 	r.Get("/weather/forecast/coords/{latitude}/{longitude}", h.handleGetForecastByCoordinates)
+
+	r.Get("/weather/open-meteo/coords/{latitude}/{longitude}", h.handleGetOpenMeteoByCoordinates)
 }
 
 // GetWeatherByCity godoc
@@ -205,8 +207,8 @@ func (h *Handler) handleGetForecastByCoordinates(w http.ResponseWriter, r *http.
 	if err != nil {
 		h.logger.Errorf("Error fetching forecast from cache: %v", err)
 	}
-	if forecast != nil {
 
+	if forecast != nil {
 		utils.JsonResponse(w, http.StatusOK, forecast)
 		return
 	}
@@ -222,6 +224,63 @@ func (h *Handler) handleGetForecastByCoordinates(w http.ResponseWriter, r *http.
 	}
 
 	if err := utils.JsonResponse(w, http.StatusOK, forecast); err != nil {
+		utils.InternalServerError(w, r, err, h.logger)
+	}
+}
+
+// GetOpenMeteoByCoordinates godoc
+//
+//	@Summary		Fetches open meteo by coordinates (latitude and longitude)
+//	@Description	Fetches the open meteo data for a specified latitude and longitude
+//	@Tags			weather
+//	@Accept			json
+//	@Produce		json
+//	@Param			latitude	path		string	true	"Latitude"
+//	@Param			longitude	path		string	true	"Longitude"
+//	@Success		200			{object}	types.OpenMeteoResponse
+//	@Failure		400			{object}	error
+//	@Failure		404			{object}	error
+//	@Failure		500			{object}	error
+//	@Router			/weather/open-meteo/coords/{latitude}/{longitude} [get]
+func (h *Handler) handleGetOpenMeteoByCoordinates(w http.ResponseWriter, r *http.Request) {
+	latitudeStr := chi.URLParam(r, "latitude")
+	longitudeStr := chi.URLParam(r, "longitude")
+
+	latitude, err := strconv.ParseFloat(latitudeStr, 64)
+	if err != nil {
+		utils.BadRequestResponse(w, r, fmt.Errorf("invalid latitude: %s", latitudeStr), h.logger)
+		return
+	}
+
+	longitude, err := strconv.ParseFloat(longitudeStr, 64)
+	if err != nil {
+		utils.BadRequestResponse(w, r, fmt.Errorf("invalid longitude: %s", longitudeStr), h.logger)
+		return
+	}
+
+	ctx := r.Context()
+
+	openMeteo, err := h.cache.GetOpenMeteo(ctx, latitude, longitude)
+	if err != nil {
+		h.logger.Errorf("Error fetching open meteo from cache: %v", err)
+	}
+
+	if openMeteo != nil {
+		utils.JsonResponse(w, http.StatusOK, openMeteo)
+		return
+	}
+
+	openMeteo, err = h.client.GetOpenMeteoByCoords(latitude, longitude)
+	if err != nil {
+		utils.InternalServerError(w, r, err, h.logger)
+		return
+	}
+
+	if err := h.cache.SetOpenMeteo(ctx, openMeteo, latitude, longitude); err != nil {
+		h.logger.Errorf("Error setting forecast in cache: %v", err)
+	}
+
+	if err := utils.JsonResponse(w, http.StatusOK, openMeteo); err != nil {
 		utils.InternalServerError(w, r, err, h.logger)
 	}
 }

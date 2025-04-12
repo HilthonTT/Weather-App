@@ -31,6 +31,36 @@ definitions:
       lon:
         type: number
     type: object
+  types.DailyForecast:
+    properties:
+      apparent_temperature_max:
+        items:
+          type: number
+        type: array
+      apparent_temperature_min:
+        items:
+          type: number
+        type: array
+      time:
+        items:
+          type: string
+        type: array
+      weather_code:
+        items:
+          type: integer
+        type: array
+    type: object
+  types.DailyUnits:
+    properties:
+      apparent_temperature_max:
+        type: string
+      apparent_temperature_min:
+        type: string
+      time:
+        type: string
+      weather_code:
+        type: string
+    type: object
   types.ForecastItem:
     properties:
       clouds:
@@ -69,6 +99,24 @@ definitions:
       message:
         type: integer
     type: object
+  types.HourlyForecast:
+    properties:
+      temperature_2m:
+        items:
+          type: number
+        type: array
+      time:
+        items:
+          type: string
+        type: array
+    type: object
+  types.HourlyUnits:
+    properties:
+      temperature_2m:
+        type: string
+      time:
+        type: string
+    type: object
   types.Main:
     properties:
       feels_like:
@@ -89,6 +137,31 @@ definitions:
         type: number
       temp_min:
         type: number
+    type: object
+  types.OpenMeteoResponse:
+    properties:
+      daily:
+        $ref: '#/definitions/types.DailyForecast'
+      daily_units:
+        $ref: '#/definitions/types.DailyUnits'
+      elevation:
+        type: number
+      generationtime_ms:
+        type: number
+      hourly:
+        $ref: '#/definitions/types.HourlyForecast'
+      hourly_units:
+        $ref: '#/definitions/types.HourlyUnits'
+      latitude:
+        type: number
+      longitude:
+        type: number
+      timezone:
+        type: string
+      timezone_abbreviation:
+        type: string
+      utc_offset_seconds:
+        type: integer
     type: object
   types.Sys:
     properties:
@@ -439,6 +512,41 @@ paths:
           description: Internal Server Error
           schema: {}
       summary: Fetches weather forecast by coordinates (latitude and longitude)
+      tags:
+      - weather
+  /weather/open-meteo/coords/{latitude}/{longitude}:
+    get:
+      consumes:
+      - application/json
+      description: Fetches the open meteo data for a specified latitude and longitude
+      parameters:
+      - description: Latitude
+        in: path
+        name: latitude
+        required: true
+        type: string
+      - description: Longitude
+        in: path
+        name: longitude
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.OpenMeteoResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Fetches open meteo by coordinates (latitude and longitude)
       tags:
       - weather
 securityDefinitions:

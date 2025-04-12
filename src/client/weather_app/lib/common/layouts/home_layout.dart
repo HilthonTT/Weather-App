@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:weather_app/common/constants/app_colors.dart';
+import 'package:weather_app/modules/weather/presentation/pages/search_page.dart';
 import 'package:weather_app/modules/weather/presentation/pages/weather_page.dart';
 
 final class HomeLayout extends StatefulWidget {
@@ -35,7 +36,7 @@ final class _HomeLayoutState extends State<HomeLayout> {
 
   final _pages = const [
     WeatherPage(),
-    Center(child: Text('Settings Screen')),
+    SearchPage(),
     Center(child: Text('Settings Screen')),
     Center(child: Text('Settings Screen')),
   ];
