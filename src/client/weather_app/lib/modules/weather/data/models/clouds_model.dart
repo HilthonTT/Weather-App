@@ -4,7 +4,7 @@ final class CloudsModel extends Clouds {
   const CloudsModel({required super.all});
 
   factory CloudsModel.fromJson(Map<String, dynamic> json) {
-    return CloudsModel(all: json['all'] as int);
+    return CloudsModel(all: (json['all'] as num).toInt());
   }
 
   Map<String, dynamic> toJson() {

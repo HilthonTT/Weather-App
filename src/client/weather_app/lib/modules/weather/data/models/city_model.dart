@@ -16,14 +16,14 @@ final class CityModel extends City {
   /// Create a [CoordModel] from a JSON map
   factory CityModel.fromJson(Map<String, dynamic> json) {
     return CityModel(
-      id: json['id'] as int,
+      id: (json['id'] as num).toInt(),
       name: json['name'] as String,
       coord: CoordModel.fromJson(json['coord'] as Map<String, dynamic>),
       country: json['country'] as String,
-      population: json['population'] as int,
-      timezone: json['timezone'] as int,
-      sunrise: json['sunrise'] as int,
-      sunset: json['sunset'] as int,
+      population: (json['population'] as num).toInt(),
+      timezone: (json['timezone'] as num).toInt(),
+      sunrise: (json['sunrise'] as num).toInt(),
+      sunset: (json['sunset'] as num).toInt(),
     );
   }
 

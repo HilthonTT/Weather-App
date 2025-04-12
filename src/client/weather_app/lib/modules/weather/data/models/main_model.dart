@@ -19,10 +19,10 @@ final class MainModel extends Main {
       feelsLike: (json['feels_like'] as num).toDouble(),
       tempMin: (json['temp_min'] as num).toDouble(),
       tempMax: (json['temp_max'] as num).toDouble(),
-      pressure: json['pressure'] as int,
-      seaLevel: json['sea_level'] as int,
-      grndLevel: json['grnd_level'] as int,
-      humidity: json['humidity'] as int,
+      pressure: (json['pressure'] as num).toInt(),
+      seaLevel: (json['sea_level'] as num).toInt(),
+      grndLevel: (json['grnd_level'] as num).toInt(),
+      humidity: (json['humidity'] as num).toInt(),
     );
   }
 

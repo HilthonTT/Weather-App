@@ -8,8 +8,10 @@ import 'package:weather_app/modules/weather/data/models/weather_model.dart';
 
 abstract interface class WeatherRemoteDatasource {
   Future<WeatherResponseModel> getWeather();
+  Future<WeatherResponseModel> getWeatherByCity(String city);
 
   Future<ForecastResponseModel> getForecast();
+  Future<ForecastResponseModel> getForecastByCity(String city);
 }
 
 @immutable
@@ -40,7 +42,7 @@ final class WeatherRemoteDatasourceImpl implements WeatherRemoteDatasource {
     } catch (e) {
       debugPrint(e.toString());
 
-      throw ServerException('Failed to load weather data');
+      throw ServerException('Failed to load forecast data');
     }
   }
 
@@ -51,6 +53,48 @@ final class WeatherRemoteDatasourceImpl implements WeatherRemoteDatasource {
 
       final url =
           '${Constants.apiUrl}/v1/weather/coords/${position.latitude}/${position.longitude}';
+
+      final response = await _dio.get(url);
+
+      if (response.statusCode != 200) {
+        throw ServerException('Failed to load weather data');
+      }
+
+      final weather = WeatherResponseModel.fromJson(response.data["data"]);
+
+      return weather;
+    } catch (e) {
+      debugPrint(e.toString());
+
+      throw ServerException('Failed to load weather data');
+    }
+  }
+
+  @override
+  Future<ForecastResponseModel> getForecastByCity(String city) async {
+    try {
+      final url = '${Constants.apiUrl}/v1/forecast/$city';
+
+      final response = await _dio.get(url);
+
+      if (response.statusCode != 200) {
+        throw ServerException('Failed to load forecast data');
+      }
+
+      final forecast = ForecastResponseModel.fromJson(response.data["data"]);
+
+      return forecast;
+    } catch (e) {
+      debugPrint(e.toString());
+
+      throw ServerException('Failed to load forecast data');
+    }
+  }
+
+  @override
+  Future<WeatherResponseModel> getWeatherByCity(String city) async {
+    try {
+      final url = '${Constants.apiUrl}/v1/weather/$city';
 
       final response = await _dio.get(url);
 

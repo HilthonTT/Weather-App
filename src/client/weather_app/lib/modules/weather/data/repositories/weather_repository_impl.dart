@@ -34,4 +34,28 @@ final class WeatherRepositoryImpl implements WeatherRepository {
       return left(Failure(e.message));
     }
   }
+
+  @override
+  Future<Either<Failure, ForecastResponse>> getForecastByCity(
+    String city,
+  ) async {
+    try {
+      final forecast = await weatherRemoteDatasource.getForecastByCity(city);
+
+      return right(forecast);
+    } on ServerException catch (e) {
+      return left(Failure(e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, WeatherResponse>> getWeatherByCity(String city) async {
+    try {
+      final weather = await weatherRemoteDatasource.getWeatherByCity(city);
+
+      return right(weather);
+    } on ServerException catch (e) {
+      return left(Failure(e.message));
+    }
+  }
 }

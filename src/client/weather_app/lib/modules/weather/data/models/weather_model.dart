@@ -32,14 +32,14 @@ final class WeatherResponseModel extends WeatherResponse {
               )
               .toList(),
       main: MainModel.fromJson(json['main'] as Map<String, dynamic>),
-      visibility: json['visibility'] as int,
+      visibility: (json['visibility'] as num).toInt(),
       wind: WindModel.fromJson(json['wind'] as Map<String, dynamic>),
       clouds: CloudsModel.fromJson(json['clouds'] as Map<String, dynamic>),
-      dt: json['dt'] as int,
+      dt: (json['dt'] as num).toInt(),
       sys: WeatherSysModel.fromJson(json['sys'] as Map<String, dynamic>),
-      timezone: json['timezone'] as int,
+      timezone: (json['timezone'] as num).toInt(),
       name: json['name'] as String,
-      cod: json['cod'] as int,
+      cod: (json['cod'] as num).toInt(),
     );
   }
 
@@ -75,7 +75,7 @@ final class WeatherItemModel extends WeatherItem {
   /// Create a [WeatherItemModel] from a JSON map
   factory WeatherItemModel.fromJson(Map<String, dynamic> json) {
     return WeatherItemModel(
-      id: json['id'] as int,
+      id: (json['id'] as num).toInt(),
       main: json['main'] as String,
       description: json['description'] as String,
       icon: json['icon'] as String,

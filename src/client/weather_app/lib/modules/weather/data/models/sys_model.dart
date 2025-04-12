@@ -25,8 +25,8 @@ final class WeatherSysModel extends WeatherSys {
   factory WeatherSysModel.fromJson(Map<String, dynamic> json) {
     return WeatherSysModel(
       country: json['country'] as String,
-      sunrise: json['sunrise'] as int,
-      sunset: json['sunset'] as int,
+      sunrise: (json['sunrise'] as num).toInt(),
+      sunset: (json['sunset'] as num).toInt(),
     );
   }
 

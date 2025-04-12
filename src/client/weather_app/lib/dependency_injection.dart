@@ -6,7 +6,9 @@ import 'package:weather_app/modules/weather/data/datasources/weather_remote_data
 import 'package:weather_app/modules/weather/data/repositories/weather_repository_impl.dart';
 import 'package:weather_app/modules/weather/domain/repositories/weather_repository.dart';
 import 'package:weather_app/modules/weather/domain/usecases/get_forecast.dart';
+import 'package:weather_app/modules/weather/domain/usecases/get_forecast_by_city.dart';
 import 'package:weather_app/modules/weather/domain/usecases/get_weather.dart';
+import 'package:weather_app/modules/weather/domain/usecases/get_weather_by_city.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -38,5 +40,11 @@ void _initWeather() {
       () => WeatherRepositoryImpl(weatherRemoteDatasource: serviceLocator()),
     )
     ..registerFactory(() => GetForecast(weatherRepository: serviceLocator()))
-    ..registerFactory(() => GetWeather(weatherRepository: serviceLocator()));
+    ..registerFactory(() => GetWeather(weatherRepository: serviceLocator()))
+    ..registerFactory(
+      () => GetWeatherByCity(weatherRepository: serviceLocator()),
+    )
+    ..registerFactory(
+      () => GetForecastByCity(weatherRepository: serviceLocator()),
+    );
 }
