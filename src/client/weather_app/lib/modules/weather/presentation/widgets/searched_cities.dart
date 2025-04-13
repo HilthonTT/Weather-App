@@ -5,6 +5,7 @@ import 'package:weather_app/common/constants/text_styles.dart';
 import 'package:weather_app/common/extensions/string.dart';
 import 'package:weather_app/common/models/city.dart';
 import 'package:weather_app/common/utils/get_weather_icon.dart';
+import 'package:weather_app/modules/weather/presentation/pages/detail_page.dart';
 import 'package:weather_app/modules/weather/presentation/providers/get_weather_by_city.dart';
 
 final class SearchedCities extends StatelessWidget {
@@ -27,7 +28,9 @@ final class SearchedCities extends StatelessWidget {
         final city = cities[index];
 
         return InkWell(
-          onTap: () {},
+          onTap: () {
+            Navigator.of(context).push(DetailPage.route(city.name));
+          },
           child: CityTile(index: index, city: city.name),
         );
       },
