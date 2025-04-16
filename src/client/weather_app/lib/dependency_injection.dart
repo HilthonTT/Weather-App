@@ -7,6 +7,7 @@ import 'package:weather_app/modules/weather/data/repositories/weather_repository
 import 'package:weather_app/modules/weather/domain/repositories/weather_repository.dart';
 import 'package:weather_app/modules/weather/domain/usecases/get_forecast.dart';
 import 'package:weather_app/modules/weather/domain/usecases/get_forecast_by_city.dart';
+import 'package:weather_app/modules/weather/domain/usecases/get_open_meteo.dart';
 import 'package:weather_app/modules/weather/domain/usecases/get_weather.dart';
 import 'package:weather_app/modules/weather/domain/usecases/get_weather_by_city.dart';
 
@@ -46,5 +47,6 @@ void _initWeather() {
     )
     ..registerFactory(
       () => GetForecastByCity(weatherRepository: serviceLocator()),
-    );
+    )
+    ..registerFactory(() => GetOpenMeteo(weatherRepository: serviceLocator()));
 }

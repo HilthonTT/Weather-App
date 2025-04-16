@@ -4,6 +4,7 @@ import 'package:weather_app/common/errors/exceptions.dart';
 import 'package:weather_app/common/errors/failure.dart';
 import 'package:weather_app/modules/weather/data/datasources/weather_remote_datasource.dart';
 import 'package:weather_app/modules/weather/domain/entities/forecast.dart';
+import 'package:weather_app/modules/weather/domain/entities/open_meteo.dart';
 import 'package:weather_app/modules/weather/domain/entities/weather.dart';
 import 'package:weather_app/modules/weather/domain/repositories/weather_repository.dart';
 
@@ -54,6 +55,17 @@ final class WeatherRepositoryImpl implements WeatherRepository {
       final weather = await weatherRemoteDatasource.getWeatherByCity(city);
 
       return right(weather);
+    } on ServerException catch (e) {
+      return left(Failure(e.message));
+    }
+  }
+
+  @override
+  Future<Either<Failure, OpenMeteoResponse>> getOpenMeteo() async {
+    try {
+      final openMeteo = await weatherRemoteDatasource.getOpenMeteo();
+
+      return right(openMeteo);
     } on ServerException catch (e) {
       return left(Failure(e.message));
     }
