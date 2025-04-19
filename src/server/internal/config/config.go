@@ -24,9 +24,10 @@ type OpenWeatherConfig struct {
 }
 
 type DbConfig struct {
-	MongoUser     string
-	MongoPassword string
-	MongoAddr     string
+	Addr               string
+	MaxOpenConnections int
+	MaxIdleConnections int
+	MaxIdleTime        string
 }
 
 type RedisConfig struct {
@@ -67,9 +68,10 @@ func NewConfig() *Config {
 			Enabled:              env.GetBool("RATE_LIMITER_ENABLED", true),
 		},
 		Db: DbConfig{
-			MongoUser:     env.GetString("MONGO_DB_USER", "root"),
-			MongoPassword: env.GetString("MONGO_DB_PASS", "example"),
-			MongoAddr:     env.GetString("MONGO_DB_HOST", "localhost:27017"),
+			Addr:               env.GetString("DB_ADDR", "postgres://admin:adminpassword@localhost/weather?sslmode=disable"),
+			MaxOpenConnections: env.GetInt("DB_MAX_OPEN_CONNS", 30),
+			MaxIdleConnections: env.GetInt("DB_MAX_IDLE_CONNS", 30),
+			MaxIdleTime:        env.GetString("DB_MAX_IDLE_TIME", "15m"),
 		},
 		RedisCfg: RedisConfig{
 			Addr:    env.GetString("REDIS_ADDR", "localhost:6379"),

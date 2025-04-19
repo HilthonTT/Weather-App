@@ -8,8 +8,11 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/hilthontt/weather/internal/cache"
 	"github.com/hilthontt/weather/internal/config"
+	"github.com/hilthontt/weather/internal/db"
 	"github.com/hilthontt/weather/internal/ratelimiter"
 	"github.com/hilthontt/weather/internal/tracer"
+	"github.com/hilthontt/weather/services/settings"
+	"github.com/hilthontt/weather/services/users"
 	"github.com/hilthontt/weather/services/weather"
 	_ "github.com/joho/godotenv/autoload"
 	"go.uber.org/zap"
@@ -61,7 +64,26 @@ func main() {
 
 		defer rdb.Close()
 	}
+	userCache := users.NewUserCache(rdb)
 	weatherCache := weather.NewWeatherCache(rdb)
+
+	// Main Database
+	db, err := db.New(
+		cfg.Db.Addr,
+		cfg.Db.MaxOpenConnections,
+		cfg.Db.MaxIdleConnections,
+		cfg.Db.MaxIdleTime,
+	)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	defer db.Close()
+	logger.Info("database connection pool established")
+
+	// Stores
+	userStore := users.NewUserStore(db)
+	settingsStore := settings.NewSettingsStore(db)
 
 	app := &application{
 		config:        *cfg,
@@ -69,6 +91,9 @@ func main() {
 		logger:        logger,
 		rateLimiter:   rateLimiter,
 		weatherCache:  weatherCache,
+		userStore:     userStore,
+		userCache:     userCache,
+		settingsStore: settingsStore,
 	}
 
 	// Metrics collected

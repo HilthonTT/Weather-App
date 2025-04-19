@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 const QueryTimeoutDuration = time.Second * 5

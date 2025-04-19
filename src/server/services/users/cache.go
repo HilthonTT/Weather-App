@@ -13,6 +13,10 @@ type UserCache struct {
 	rdb *redis.Client
 }
 
+func NewUserCache(rdb *redis.Client) *UserCache {
+	return &UserCache{rdb}
+}
+
 const UserExpTime = time.Minute
 
 func (s *UserCache) Get(ctx context.Context, userID int64) (*User, error) {

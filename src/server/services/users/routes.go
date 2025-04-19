@@ -13,10 +13,6 @@ import (
 	"go.uber.org/zap"
 )
 
-type userKey string
-
-const UserCtx userKey = "user"
-
 type Handler struct {
 	logger        *zap.SugaredLogger
 	store         *UserStore

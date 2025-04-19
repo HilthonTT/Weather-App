@@ -17,6 +17,7 @@ import (
 	"github.com/hilthontt/weather/internal/auth"
 	"github.com/hilthontt/weather/internal/config"
 	"github.com/hilthontt/weather/internal/ratelimiter"
+	"github.com/hilthontt/weather/services/settings"
 	"github.com/hilthontt/weather/services/users"
 	"github.com/hilthontt/weather/services/weather"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -32,6 +33,7 @@ type application struct {
 	authenticator auth.Authenticator
 	userStore     *users.UserStore
 	userCache     *users.UserCache
+	settingsStore *settings.SettingsStore
 }
 
 func (app *application) mount() http.Handler {
