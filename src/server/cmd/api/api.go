@@ -71,6 +71,9 @@ func (app *application) mount() http.Handler {
 
 		userHandler := users.NewHandler(app.logger, app.userStore, app.config.Auth, app.authenticator)
 		userHandler.RegisterRoutes(r)
+
+		settingsHandler := settings.NewHandler(app.logger, app.settingsStore)
+		settingsHandler.RegisterRoutes(r)
 	})
 
 	return r

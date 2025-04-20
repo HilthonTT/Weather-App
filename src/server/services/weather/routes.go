@@ -22,13 +22,15 @@ func NewHandler(client Client, logger *zap.SugaredLogger, cache *WeatherCache) *
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
-	r.Get("/weather/{city}", h.handleGetWeatherByCity)
-	r.Get("/weather/coords/{latitude}/{longitude}", h.handleGetWeatherByCoordinates)
+	r.Route("/weather", func(r chi.Router) {
+		r.Get("/{city}", h.handleGetWeatherByCity)
+		r.Get("/coords/{latitude}/{longitude}", h.handleGetWeatherByCoordinates)
 
-	r.Get("/weather/forecast/{city}", h.handleGetForecast)
-	r.Get("/weather/forecast/coords/{latitude}/{longitude}", h.handleGetForecastByCoordinates)
+		r.Get("/forecast/{city}", h.handleGetForecast)
+		r.Get("/forecast/coords/{latitude}/{longitude}", h.handleGetForecastByCoordinates)
 
-	r.Get("/weather/open-meteo/coords/{latitude}/{longitude}", h.handleGetOpenMeteoByCoordinates)
+		r.Get("/open-meteo/coords/{latitude}/{longitude}", h.handleGetOpenMeteoByCoordinates)
+	})
 }
 
 // GetWeatherByCity godoc

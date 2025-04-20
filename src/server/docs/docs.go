@@ -44,6 +44,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/settings": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches the settings associated with the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Retrieve user settings",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/settings.Settings"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/users/login": {
             "post": {
                 "description": "Authenticates a user with email and password, and returns a JWT token upon successful login",
@@ -69,8 +101,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "JWT token",
+                    "200": {
+                        "description": "JWT token\"   // Change 201 to 200",
                         "schema": {
                             "type": "string"
                         }
@@ -375,6 +407,59 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "settings.Settings": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "temperature": {
+                    "$ref": "#/definitions/settings.TemperatureUnit"
+                },
+                "time_display": {
+                    "$ref": "#/definitions/settings.TimeFormat"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "wind_speed": {
+                    "$ref": "#/definitions/settings.WindSpeedUnit"
+                }
+            }
+        },
+        "settings.TemperatureUnit": {
+            "type": "string",
+            "enum": [
+                "Celsius",
+                "Fahrenheit"
+            ],
+            "x-enum-varnames": [
+                "Celsius",
+                "Fahrenheit"
+            ]
+        },
+        "settings.TimeFormat": {
+            "type": "string",
+            "enum": [
+                "12h",
+                "24h"
+            ],
+            "x-enum-varnames": [
+                "H12",
+                "H24"
+            ]
+        },
+        "settings.WindSpeedUnit": {
+            "type": "string",
+            "enum": [
+                "Km/h",
+                "Miles/h"
+            ],
+            "x-enum-varnames": [
+                "Kmh",
+                "Milesph"
+            ]
+        },
         "types.City": {
             "type": "object",
             "properties": {
@@ -757,7 +842,7 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "maxLength": 72,
-                    "minLength": 3
+                    "minLength": 6
                 }
             }
         },
@@ -776,7 +861,7 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "maxLength": 72,
-                    "minLength": 3
+                    "minLength": 6
                 },
                 "username": {
                     "type": "string",

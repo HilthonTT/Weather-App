@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/hilthontt/weather/internal/auth"
 	"github.com/hilthontt/weather/internal/cache"
 	"github.com/hilthontt/weather/internal/config"
 	"github.com/hilthontt/weather/internal/db"
@@ -85,6 +86,13 @@ func main() {
 	userStore := users.NewUserStore(db)
 	settingsStore := settings.NewSettingsStore(db)
 
+	// Authenticator
+	jwtAuthenticator := auth.NewJWTAuthenticator(
+		cfg.Auth.Token.Secret,
+		cfg.Auth.Token.Iss,
+		cfg.Auth.Token.Iss,
+	)
+
 	app := &application{
 		config:        *cfg,
 		weatherClient: *weatherClient,
@@ -94,6 +102,7 @@ func main() {
 		userStore:     userStore,
 		userCache:     userCache,
 		settingsStore: settingsStore,
+		authenticator: jwtAuthenticator,
 	}
 
 	// Metrics collected

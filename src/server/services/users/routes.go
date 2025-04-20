@@ -1,6 +1,7 @@
 package users
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -29,14 +30,16 @@ func NewHandler(
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
-	r.Post("/users/register", h.registerUserHandler)
-	r.Post("/users/login", h.loginUserHandler)
+	r.Route("/users", func(r chi.Router) {
+		r.Post("/register", h.registerUserHandler)
+		r.Post("/login", h.loginUserHandler)
+	})
 }
 
 type RegisterUserPayload struct {
 	Username string `json:"username" validate:"required,max=100"`
 	Email    string `json:"email" validate:"required,email,max=255"`
-	Password string `json:"password" validate:"required,min=3,max=72"`
+	Password string `json:"password" validate:"required,min=6,max=72"`
 }
 
 // registerUserHandler godoc
@@ -77,6 +80,21 @@ func (h *Handler) registerUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := r.Context()
+
+	err := h.store.Create(ctx, user)
+	if err != nil {
+		switch err {
+		case ErrDuplicateEmail:
+			utils.BadRequestResponse(w, r, err, h.logger)
+		case ErrDuplicateUsername:
+			utils.BadRequestResponse(w, r, err, h.logger)
+		default:
+			utils.InternalServerError(w, r, err, h.logger)
+		}
+		return
+	}
+
 	if err := utils.JsonResponse(w, http.StatusCreated, user); err != nil {
 		utils.InternalServerError(w, r, err, h.logger)
 	}
@@ -84,7 +102,7 @@ func (h *Handler) registerUserHandler(w http.ResponseWriter, r *http.Request) {
 
 type LoginUserPayload struct {
 	Email    string `json:"email" validate:"required,email,max=255"`
-	Password string `json:"password" validate:"required,min=3,max=72"`
+	Password string `json:"password" validate:"required,min=6,max=72"`
 }
 
 // loginUserHandler godoc
@@ -94,8 +112,8 @@ type LoginUserPayload struct {
 //	@Tags			users
 //	@Accept			json
 //	@Produce		json
-//	@Param			payload	body		LoginUserPayload	true	"User login credentials"
-//	@Success		201		{string}	string				"JWT token"
+//	@Param			payload	body		LoginUserPayload	true		"User login credentials"
+//	@Success		200		{string}	string				"JWT token"	//	Change	201	to	200
 //	@Failure		400		{object}	error
 //	@Failure		401		{object}	error
 //	@Failure		500		{object}	error
@@ -138,11 +156,16 @@ func (h *Handler) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 		"aud": h.authConfig.Token.Iss,
 	}
 
+	log.Print(claims)
+
 	token, err := h.authenticator.GenerateToken(claims)
 	if err != nil {
+		log.Print(err.Error())
 		utils.InternalServerError(w, r, err, h.logger)
 		return
 	}
+
+	log.Print("Hit here")
 
 	if err := utils.JsonResponse(w, http.StatusCreated, token); err != nil {
 		utils.InternalServerError(w, r, err, h.logger)

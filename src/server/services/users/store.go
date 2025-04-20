@@ -20,7 +20,6 @@ func (p *password) Set(text string) error {
 		return err
 	}
 
-	p.text = &text
 	p.hash = hash
 
 	return nil
@@ -38,10 +37,10 @@ func NewUserStore(db *sql.DB) *UserStore {
 	return &UserStore{db}
 }
 
-func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
+func (s *UserStore) Create(ctx context.Context, user *User) error {
 	query := `
-		INSERT INTO users (username, password, email, role_id) VALUES 
-    ($1, $2, $3, (SELECT id FROM roles WHERE name = $4))
+		INSERT INTO users (username, password, email, role_id)
+		VALUES ($1, $2, $3, (SELECT id FROM roles WHERE name = $4))
     RETURNING id, created_at
 	`
 
@@ -53,7 +52,7 @@ func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 		role = "user"
 	}
 
-	err := tx.QueryRowContext(
+	err := s.db.QueryRowContext(
 		ctx,
 		query,
 		user.Username,
@@ -119,8 +118,9 @@ func (s *UserStore) GetByID(ctx context.Context, userID int64) (*User, error) {
 
 func (s *UserStore) GetByEmail(ctx context.Context, email string) (*User, error) {
 	query := `
-		SELECT id, username, email, password, created_at FROM users
-		WHERE email = $1 AND is_active = true
+		SELECT id, username, email, password, created_at 
+		FROM users
+		WHERE email = $1
 	`
 
 	ctx, cancel := context.WithTimeout(ctx, db.QueryTimeoutDuration)
@@ -136,7 +136,6 @@ func (s *UserStore) GetByEmail(ctx context.Context, email string) (*User, error)
 	)
 	if err != nil {
 		switch err {
-
 		case sql.ErrNoRows:
 			return nil, db.ErrNotFound
 		default:

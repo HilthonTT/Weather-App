@@ -10,7 +10,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/hilthontt/weather/internal/utils"
-	"github.com/hilthontt/weather/services/settings"
+
 	"github.com/hilthontt/weather/services/users"
 )
 
@@ -130,18 +130,4 @@ func (app *application) getUser(ctx context.Context, userID int64) (*users.User,
 	}
 
 	return user, nil
-}
-
-func (app *application) checkSettingsOwnership(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := users.GetUserFromContext(r)
-		settings := settings.GetSettingsFromContext(r)
-
-		if settings.UserID == user.ID {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		utils.ForbiddenResponse(w, r, app.logger)
-	})
 }

@@ -1,5 +1,42 @@
 basePath: /v1
 definitions:
+  settings.Settings:
+    properties:
+      id:
+        type: integer
+      temperature:
+        $ref: '#/definitions/settings.TemperatureUnit'
+      time_display:
+        $ref: '#/definitions/settings.TimeFormat'
+      user_id:
+        type: integer
+      wind_speed:
+        $ref: '#/definitions/settings.WindSpeedUnit'
+    type: object
+  settings.TemperatureUnit:
+    enum:
+    - Celsius
+    - Fahrenheit
+    type: string
+    x-enum-varnames:
+    - Celsius
+    - Fahrenheit
+  settings.TimeFormat:
+    enum:
+    - 12h
+    - 24h
+    type: string
+    x-enum-varnames:
+    - H12
+    - H24
+  settings.WindSpeedUnit:
+    enum:
+    - Km/h
+    - Miles/h
+    type: string
+    x-enum-varnames:
+    - Kmh
+    - Milesph
   types.City:
     properties:
       coord:
@@ -247,7 +284,7 @@ definitions:
         type: string
       password:
         maxLength: 72
-        minLength: 3
+        minLength: 6
         type: string
     required:
     - email
@@ -260,7 +297,7 @@ definitions:
         type: string
       password:
         maxLength: 72
-        minLength: 3
+        minLength: 6
         type: string
       username:
         maxLength: 100
@@ -323,6 +360,26 @@ paths:
       summary: Healthcheck
       tags:
       - ops
+  /settings:
+    get:
+      consumes:
+      - application/json
+      description: Fetches the settings associated with the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/settings.Settings'
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - BearerAuth: []
+      summary: Retrieve user settings
+      tags:
+      - settings
   /users/login:
     post:
       consumes:
@@ -339,8 +396,8 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: JWT token
+        "200":
+          description: JWT token"   // Change 201 to 200
           schema:
             type: string
         "400":
