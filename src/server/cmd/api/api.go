@@ -15,6 +15,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/hilthontt/weather/internal/auth"
+	"github.com/hilthontt/weather/internal/mailer"
 	"github.com/hilthontt/weather/internal/ratelimiter"
 	"github.com/hilthontt/weather/internal/store"
 	"github.com/hilthontt/weather/internal/store/cache"
@@ -31,6 +32,7 @@ type application struct {
 	logger        *zap.SugaredLogger
 	authenticator auth.Authenticator
 	rateLimiter   ratelimiter.Limiter
+	mailer        mailer.Client
 }
 
 type config struct {
@@ -43,6 +45,7 @@ type config struct {
 	redisCfg    redisConfig
 	rateLimiter ratelimiter.Config
 	openWeather openWeatherConfig
+	mail        mailConfig
 }
 
 type redisConfig struct {
@@ -79,6 +82,17 @@ type openWeatherConfig struct {
 	apiKey string
 }
 
+type mailConfig struct {
+	mailTrap  mailTrapConfig
+	fromEmail string
+	exp       time.Duration
+}
+
+type mailTrapConfig struct {
+	username string
+	password string
+}
+
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
 
@@ -112,6 +126,7 @@ func (app *application) mount() http.Handler {
 
 		r.Route("/authentication", func(r chi.Router) {
 			r.Post("/login", app.loginUserHandler)
+			r.Post("/register", app.registerUserHandler)
 		})
 
 		r.Route("/weather", func(r chi.Router) {

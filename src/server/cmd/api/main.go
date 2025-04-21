@@ -9,6 +9,7 @@ import (
 	"github.com/hilthontt/weather/internal/auth"
 	"github.com/hilthontt/weather/internal/db"
 	"github.com/hilthontt/weather/internal/env"
+	"github.com/hilthontt/weather/internal/mailer"
 	"github.com/hilthontt/weather/internal/ratelimiter"
 	"github.com/hilthontt/weather/internal/store"
 	"github.com/hilthontt/weather/internal/store/cache"
@@ -55,6 +56,14 @@ func main() {
 		openWeather: openWeatherConfig{
 			apiKey: env.GetString("OPEN_WEATHER_API_KEY", ""),
 		},
+		mail: mailConfig{
+			exp:       time.Hour * 24 * 3, // 3 days
+			fromEmail: env.GetString("FROM_EMAIL", "from@example.com"),
+			mailTrap: mailTrapConfig{
+				username: env.GetString("MAILTRAP_USERNAME", ""),
+				password: env.GetString("MAILTRAP_PASSWORD", ""),
+			},
+		},
 	}
 
 	// Logger
@@ -90,6 +99,16 @@ func main() {
 		cfg.rateLimiter.TimeFrame,
 	)
 
+	// Mailer
+	mailtrap, err := mailer.NewMailTrapClient(
+		cfg.mail.mailTrap.username,
+		cfg.mail.mailTrap.password,
+		cfg.mail.fromEmail,
+	)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	// Authenticator
 	jwtAuthenticator := auth.NewJWTAuthenticator(
 		cfg.auth.token.secret,
@@ -107,6 +126,7 @@ func main() {
 		logger:        logger,
 		authenticator: jwtAuthenticator,
 		rateLimiter:   rateLimiter,
+		mailer:        mailtrap,
 	}
 
 	// Metrics collected
