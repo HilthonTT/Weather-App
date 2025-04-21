@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:latest
-    container_name: postgres-db
+    container_name: open-weather-db
     environment:
       POSTGRES_DB: weather
       POSTGRES_USER: admin

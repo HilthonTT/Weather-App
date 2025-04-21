@@ -9,21 +9,58 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
+        "contact": {},
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/authentication/login": {
+            "post": {
+                "description": "Creates a token for a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "Creates a token",
+                "parameters": [
+                    {
+                        "description": "User credentials",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/main.LoginUserPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "Healthcheck endpoint",
@@ -44,14 +81,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/settings": {
+        "/users/{id}": {
             "get": {
                 "security": [
                     {
-                        "BearerAuth": []
+                        "ApiKeyAuth": []
                     }
                 ],
-                "description": "Fetches the settings associated with the authenticated user",
+                "description": "Fetches a user profile by ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -59,102 +96,31 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "settings"
+                    "users"
                 ],
-                "summary": "Retrieve user settings",
+                "summary": "Fetches a user profile",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/settings.Settings"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
-                    }
-                }
-            }
-        },
-        "/users/login": {
-            "post": {
-                "description": "Authenticates a user with email and password, and returns a JWT token upon successful login",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Logs in a user",
-                "parameters": [
-                    {
-                        "description": "User login credentials",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/users.LoginUserPayload"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "JWT token\"   // Change 201 to 200",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/store.User"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {}
                     },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {}
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
-                    }
-                }
-            }
-        },
-        "/users/register": {
-            "post": {
-                "description": "Creates a new user account with a username, email, and password",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Registers a new user",
-                "parameters": [
-                    {
-                        "description": "New user registration data",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/users.RegisterUserPayload"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created user object",
-                        "schema": {
-                            "$ref": "#/definitions/users.User"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
+                    "404": {
+                        "description": "Not Found",
                         "schema": {}
                     },
                     "500": {
@@ -197,7 +163,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/types.WeatherResponse"
+                            "$ref": "#/definitions/store.WeatherResponse"
                         }
                     },
                     "400": {
@@ -248,7 +214,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/types.ForecastResponse"
+                            "$ref": "#/definitions/store.ForecastResponse"
                         }
                     },
                     "400": {
@@ -292,7 +258,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/types.ForecastResponse"
+                            "$ref": "#/definitions/store.ForecastResponse"
                         }
                     },
                     "400": {
@@ -343,7 +309,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/types.OpenMeteoResponse"
+                            "$ref": "#/definitions/store.OpenMeteoResponse"
                         }
                     },
                     "400": {
@@ -387,7 +353,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/types.WeatherResponse"
+                            "$ref": "#/definitions/store.WeatherResponse"
                         }
                     },
                     "400": {
@@ -407,64 +373,29 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "settings.Settings": {
+        "main.LoginUserPayload": {
             "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
             "properties": {
-                "id": {
-                    "type": "integer"
+                "email": {
+                    "type": "string",
+                    "maxLength": 255
                 },
-                "temperature": {
-                    "$ref": "#/definitions/settings.TemperatureUnit"
-                },
-                "time_display": {
-                    "$ref": "#/definitions/settings.TimeFormat"
-                },
-                "user_id": {
-                    "type": "integer"
-                },
-                "wind_speed": {
-                    "$ref": "#/definitions/settings.WindSpeedUnit"
+                "password": {
+                    "type": "string",
+                    "maxLength": 72,
+                    "minLength": 3
                 }
             }
         },
-        "settings.TemperatureUnit": {
-            "type": "string",
-            "enum": [
-                "Celsius",
-                "Fahrenheit"
-            ],
-            "x-enum-varnames": [
-                "Celsius",
-                "Fahrenheit"
-            ]
-        },
-        "settings.TimeFormat": {
-            "type": "string",
-            "enum": [
-                "12h",
-                "24h"
-            ],
-            "x-enum-varnames": [
-                "H12",
-                "H24"
-            ]
-        },
-        "settings.WindSpeedUnit": {
-            "type": "string",
-            "enum": [
-                "Km/h",
-                "Miles/h"
-            ],
-            "x-enum-varnames": [
-                "Kmh",
-                "Milesph"
-            ]
-        },
-        "types.City": {
+        "store.City": {
             "type": "object",
             "properties": {
                 "coord": {
-                    "$ref": "#/definitions/types.Coord"
+                    "$ref": "#/definitions/store.Coord"
                 },
                 "country": {
                     "type": "string"
@@ -489,7 +420,7 @@ const docTemplate = `{
                 }
             }
         },
-        "types.Clouds": {
+        "store.Clouds": {
             "type": "object",
             "properties": {
                 "all": {
@@ -497,7 +428,7 @@ const docTemplate = `{
                 }
             }
         },
-        "types.Coord": {
+        "store.Coord": {
             "type": "object",
             "properties": {
                 "lat": {
@@ -508,7 +439,7 @@ const docTemplate = `{
                 }
             }
         },
-        "types.DailyForecast": {
+        "store.DailyForecast": {
             "type": "object",
             "properties": {
                 "apparent_temperature_max": {
@@ -537,7 +468,7 @@ const docTemplate = `{
                 }
             }
         },
-        "types.DailyUnits": {
+        "store.DailyUnits": {
             "type": "object",
             "properties": {
                 "apparent_temperature_max": {
@@ -554,11 +485,11 @@ const docTemplate = `{
                 }
             }
         },
-        "types.ForecastItem": {
+        "store.ForecastItem": {
             "type": "object",
             "properties": {
                 "clouds": {
-                    "$ref": "#/definitions/types.Clouds"
+                    "$ref": "#/definitions/store.Clouds"
                 },
                 "dt": {
                     "type": "integer"
@@ -567,13 +498,13 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "main": {
-                    "$ref": "#/definitions/types.Main"
+                    "$ref": "#/definitions/store.Main"
                 },
                 "pop": {
                     "type": "number"
                 },
                 "sys": {
-                    "$ref": "#/definitions/types.Sys"
+                    "$ref": "#/definitions/store.Sys"
                 },
                 "visibility": {
                     "type": "integer"
@@ -581,19 +512,19 @@ const docTemplate = `{
                 "weather": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/types.Weather"
+                        "$ref": "#/definitions/store.Weather"
                     }
                 },
                 "wind": {
-                    "$ref": "#/definitions/types.Wind"
+                    "$ref": "#/definitions/store.Wind"
                 }
             }
         },
-        "types.ForecastResponse": {
+        "store.ForecastResponse": {
             "type": "object",
             "properties": {
                 "city": {
-                    "$ref": "#/definitions/types.City"
+                    "$ref": "#/definitions/store.City"
                 },
                 "cnt": {
                     "type": "integer"
@@ -604,7 +535,7 @@ const docTemplate = `{
                 "list": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/types.ForecastItem"
+                        "$ref": "#/definitions/store.ForecastItem"
                     }
                 },
                 "message": {
@@ -612,7 +543,7 @@ const docTemplate = `{
                 }
             }
         },
-        "types.HourlyForecast": {
+        "store.HourlyForecast": {
             "type": "object",
             "properties": {
                 "temperature_2m": {
@@ -629,7 +560,7 @@ const docTemplate = `{
                 }
             }
         },
-        "types.HourlyUnits": {
+        "store.HourlyUnits": {
             "type": "object",
             "properties": {
                 "temperature_2m": {
@@ -640,7 +571,7 @@ const docTemplate = `{
                 }
             }
         },
-        "types.Main": {
+        "store.Main": {
             "type": "object",
             "properties": {
                 "feels_like": {
@@ -672,14 +603,14 @@ const docTemplate = `{
                 }
             }
         },
-        "types.OpenMeteoResponse": {
+        "store.OpenMeteoResponse": {
             "type": "object",
             "properties": {
                 "daily": {
-                    "$ref": "#/definitions/types.DailyForecast"
+                    "$ref": "#/definitions/store.DailyForecast"
                 },
                 "daily_units": {
-                    "$ref": "#/definitions/types.DailyUnits"
+                    "$ref": "#/definitions/store.DailyUnits"
                 },
                 "elevation": {
                     "type": "number"
@@ -688,10 +619,10 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "hourly": {
-                    "$ref": "#/definitions/types.HourlyForecast"
+                    "$ref": "#/definitions/store.HourlyForecast"
                 },
                 "hourly_units": {
-                    "$ref": "#/definitions/types.HourlyUnits"
+                    "$ref": "#/definitions/store.HourlyUnits"
                 },
                 "latitude": {
                     "type": "number"
@@ -710,7 +641,24 @@ const docTemplate = `{
                 }
             }
         },
-        "types.Sys": {
+        "store.Role": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "level": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "store.Sys": {
             "type": "object",
             "properties": {
                 "pod": {
@@ -718,7 +666,33 @@ const docTemplate = `{
                 }
             }
         },
-        "types.Weather": {
+        "store.User": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "email_verified": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "role": {
+                    "$ref": "#/definitions/store.Role"
+                },
+                "role_id": {
+                    "type": "integer"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "store.Weather": {
             "type": "object",
             "properties": {
                 "description": {
@@ -735,17 +709,17 @@ const docTemplate = `{
                 }
             }
         },
-        "types.WeatherResponse": {
+        "store.WeatherResponse": {
             "type": "object",
             "properties": {
                 "clouds": {
-                    "$ref": "#/definitions/types.Clouds"
+                    "$ref": "#/definitions/store.Clouds"
                 },
                 "cod": {
                     "type": "integer"
                 },
                 "coord": {
-                    "$ref": "#/definitions/types.Coord"
+                    "$ref": "#/definitions/store.Coord"
                 },
                 "dt": {
                     "description": "Timestamp",
@@ -806,15 +780,15 @@ const docTemplate = `{
                 "weather": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/types.Weather"
+                        "$ref": "#/definitions/store.Weather"
                     }
                 },
                 "wind": {
-                    "$ref": "#/definitions/types.Wind"
+                    "$ref": "#/definitions/store.Wind"
                 }
             }
         },
-        "types.Wind": {
+        "store.Wind": {
             "type": "object",
             "properties": {
                 "deg": {
@@ -827,98 +801,6 @@ const docTemplate = `{
                     "type": "number"
                 }
             }
-        },
-        "users.LoginUserPayload": {
-            "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "maxLength": 255
-                },
-                "password": {
-                    "type": "string",
-                    "maxLength": 72,
-                    "minLength": 6
-                }
-            }
-        },
-        "users.RegisterUserPayload": {
-            "type": "object",
-            "required": [
-                "email",
-                "password",
-                "username"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "maxLength": 255
-                },
-                "password": {
-                    "type": "string",
-                    "maxLength": 72,
-                    "minLength": 6
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 100
-                }
-            }
-        },
-        "users.Role": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "level": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "users.User": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "is_active": {
-                    "type": "boolean"
-                },
-                "role": {
-                    "$ref": "#/definitions/users.Role"
-                },
-                "role_id": {
-                    "type": "integer"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        }
-    },
-    "securityDefinitions": {
-        "ApiKeyAuth": {
-            "description": "API key authentication for accessing weather data",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
         }
     }
 }`
@@ -927,10 +809,10 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "",
 	Host:             "",
-	BasePath:         "/v1",
+	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Weather API",
-	Description:      "API for fetching weather data",
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

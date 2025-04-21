@@ -1,4 +1,4 @@
-package users
+package cache
 
 import (
 	"context"
@@ -7,19 +7,16 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/hilthontt/weather/internal/store"
 )
 
-type UserCache struct {
+type UserStore struct {
 	rdb *redis.Client
-}
-
-func NewUserCache(rdb *redis.Client) *UserCache {
-	return &UserCache{rdb}
 }
 
 const UserExpTime = time.Minute
 
-func (s *UserCache) Get(ctx context.Context, userID int64) (*User, error) {
+func (s *UserStore) Get(ctx context.Context, userID int64) (*store.User, error) {
 	cacheKey := fmt.Sprintf("user-%d", userID)
 
 	data, err := s.rdb.Get(ctx, cacheKey).Result()
@@ -29,7 +26,7 @@ func (s *UserCache) Get(ctx context.Context, userID int64) (*User, error) {
 		return nil, err
 	}
 
-	var user User
+	var user store.User
 	if data != "" {
 		err := json.Unmarshal([]byte(data), &user)
 		if err != nil {
@@ -40,7 +37,7 @@ func (s *UserCache) Get(ctx context.Context, userID int64) (*User, error) {
 	return &user, nil
 }
 
-func (s *UserCache) Set(ctx context.Context, user *User) error {
+func (s *UserStore) Set(ctx context.Context, user *store.User) error {
 	cacheKey := fmt.Sprintf("user-%d", user.ID)
 
 	json, err := json.Marshal(user)
@@ -51,8 +48,7 @@ func (s *UserCache) Set(ctx context.Context, user *User) error {
 	return s.rdb.SetEX(ctx, cacheKey, json, UserExpTime).Err()
 }
 
-func (s *UserCache) Delete(ctx context.Context, userID int64) error {
+func (s *UserStore) Delete(ctx context.Context, userID int64) {
 	cacheKey := fmt.Sprintf("user-%d", userID)
-
-	return s.rdb.Del(ctx, cacheKey).Err()
+	s.rdb.Del(ctx, cacheKey)
 }

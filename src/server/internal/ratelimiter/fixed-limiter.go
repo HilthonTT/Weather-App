@@ -33,7 +33,6 @@ func (rl *FixedWindowRateLimiter) Allow(ip string) (bool, time.Duration) {
 
 		rl.clients[ip]++
 		rl.Unlock()
-
 		return true, 0
 	}
 

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"expvar"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,27 +14,69 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/hilthontt/weather/docs"
 	"github.com/hilthontt/weather/internal/auth"
-	"github.com/hilthontt/weather/internal/config"
 	"github.com/hilthontt/weather/internal/ratelimiter"
-	"github.com/hilthontt/weather/services/settings"
-	"github.com/hilthontt/weather/services/users"
-	"github.com/hilthontt/weather/services/weather"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
+	"github.com/hilthontt/weather/internal/store"
+	"github.com/hilthontt/weather/internal/store/cache"
 	"go.uber.org/zap"
+
+	"github.com/hilthontt/weather/docs"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 type application struct {
-	config        config.Config
-	weatherClient weather.Client
-	rateLimiter   ratelimiter.Limiter
+	config        config
+	store         store.Storage
+	cacheStorage  cache.Storage
 	logger        *zap.SugaredLogger
-	weatherCache  *weather.WeatherCache
 	authenticator auth.Authenticator
-	userStore     *users.UserStore
-	userCache     *users.UserCache
-	settingsStore *settings.SettingsStore
+	rateLimiter   ratelimiter.Limiter
+}
+
+type config struct {
+	addr        string
+	db          dbConfig
+	env         string
+	apiURL      string
+	frontendURL string
+	auth        authConfig
+	redisCfg    redisConfig
+	rateLimiter ratelimiter.Config
+	openWeather openWeatherConfig
+}
+
+type redisConfig struct {
+	addr    string
+	pw      string
+	db      int
+	enabled bool
+}
+
+type authConfig struct {
+	basic basicConfig
+	token tokenConfig
+}
+
+type tokenConfig struct {
+	secret string
+	exp    time.Duration
+	iss    string
+}
+
+type basicConfig struct {
+	user string
+	pass string
+}
+
+type dbConfig struct {
+	addr         string
+	maxOpenConns int
+	maxIdleConns int
+	maxIdleTime  string
+}
+
+type openWeatherConfig struct {
+	apiKey string
 }
 
 func (app *application) mount() http.Handler {
@@ -56,36 +99,43 @@ func (app *application) mount() http.Handler {
 	// processing should be stopped.
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	if app.config.RateLimiter.Enabled {
+	if app.config.rateLimiter.Enabled {
 		r.Use(app.RateLimiterMiddleware)
 	}
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", app.healthCheckHandler)
+		r.With(app.BasicAuthMiddleware()).Get("/debug/vars", expvar.Handler().ServeHTTP)
 
-		docsURL := fmt.Sprintf("%s/swagger/doc.json", app.config.Addr)
+		docsURL := fmt.Sprintf("%s/swagger/doc.json", app.config.addr)
 		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
 
-		weatherHandler := weather.NewHandler(app.weatherClient, app.logger, app.weatherCache)
-		weatherHandler.RegisterRoutes(r)
+		r.Route("/authentication", func(r chi.Router) {
+			r.Post("/login", app.loginUserHandler)
+		})
 
-		userHandler := users.NewHandler(app.logger, app.userStore, app.config.Auth, app.authenticator)
-		userHandler.RegisterRoutes(r)
+		r.Route("/weather", func(r chi.Router) {
+			r.Get("/{city}", app.handleGetWeatherByCity)
+			r.Get("/coords/{latitude}/{longitude}", app.handleGetWeatherByCoordinates)
 
-		settingsHandler := settings.NewHandler(app.logger, app.settingsStore)
-		settingsHandler.RegisterRoutes(r)
+			r.Get("/forecast/{city}", app.handleGetForecast)
+			r.Get("/forecast/coords/{latitude}/{longitude}", app.handleGetForecastByCoordinates)
+
+			r.Get("/open-meteo/coords/{latitude}/{longitude}", app.handleGetOpenMeteoByCoordinates)
+		})
 	})
 
 	return r
 }
 
 func (app *application) run(mux http.Handler) error {
+	// Docs
 	docs.SwaggerInfo.Version = version
-	docs.SwaggerInfo.Host = app.config.ApiURL
+	docs.SwaggerInfo.Host = app.config.apiURL
 	docs.SwaggerInfo.BasePath = "/v1"
 
 	srv := &http.Server{
-		Addr:         app.config.Addr,
+		Addr:         app.config.addr,
 		Handler:      mux,
 		WriteTimeout: time.Second * 30,
 		ReadTimeout:  time.Second * 10,
@@ -108,7 +158,7 @@ func (app *application) run(mux http.Handler) error {
 		shutdown <- srv.Shutdown(ctx)
 	}()
 
-	app.logger.Infow("server has started", "addr", app.config.Addr, "env", app.config.Env)
+	app.logger.Infow("server has started", "addr", app.config.addr, "env", app.config.env)
 
 	err := srv.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
@@ -120,7 +170,7 @@ func (app *application) run(mux http.Handler) error {
 		return err
 	}
 
-	app.logger.Infow("server has stopped", "addr", app.config.Addr, "env", app.config.Env)
+	app.logger.Infow("server has stopped", "addr", app.config.addr, "env", app.config.env)
 
 	return nil
 }

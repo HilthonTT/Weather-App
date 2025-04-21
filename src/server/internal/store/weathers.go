@@ -1,4 +1,13 @@
-package types
+package store
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+	"net/url"
+	"time"
+)
 
 type WeatherResponse struct {
 	Coord   Coord     `json:"coord"`
@@ -132,4 +141,135 @@ type DailyForecast struct {
 	WeatherCode     []int     `json:"weather_code"`
 	ApparentTempMax []float64 `json:"apparent_temperature_max"`
 	ApparentTempMin []float64 `json:"apparent_temperature_min"`
+}
+
+type WeatherStore struct {
+	APIKey string
+	HTTP   *http.Client
+}
+
+func (s *WeatherStore) GetWeather(city string) (*WeatherResponse, error) {
+	if s.APIKey == "" {
+		return nil, errors.New("OpenWeather API key is required")
+	}
+
+	url := buildURL("https://api.openweathermap.org/data/2.5/weather", map[string]string{
+		"q":     city,
+		"appid": s.APIKey,
+		"units": "metris",
+	})
+
+	return s.fetchWeather(url)
+}
+
+func (s *WeatherStore) GetWeatherByCoords(lat, lon float64) (*WeatherResponse, error) {
+	if s.APIKey == "" {
+		return nil, errors.New("OpenWeather API key is required")
+	}
+
+	url := buildURL("https://api.openweathermap.org/data/2.5/weather", map[string]string{
+		"lat":   fmt.Sprintf("%f", lat),
+		"lon":   fmt.Sprintf("%f", lon),
+		"appid": s.APIKey,
+		"units": "metris",
+	})
+
+	return s.fetchWeather(url)
+}
+
+func (s *WeatherStore) GetForecast(city string) (*ForecastResponse, error) {
+	url := buildURL("https://api.openweathermap.org/data/2.5/forecast", map[string]string{
+		"q":     city,
+		"appid": s.APIKey,
+		"units": "metric",
+	})
+
+	return s.fetchForecast(url)
+}
+
+func (s *WeatherStore) GetForecastByCoords(lat, lon float64) (*ForecastResponse, error) {
+	url := buildURL("https://api.openweathermap.org/data/2.5/forecast", map[string]string{
+		"lat":   fmt.Sprintf("%f", lat),
+		"lon":   fmt.Sprintf("%f", lon),
+		"appid": s.APIKey,
+		"units": "metric",
+	})
+
+	return s.fetchForecast(url)
+}
+
+func (s *WeatherStore) GetOpenMeteoByCoords(lat, lon float64) (*OpenMeteoResponse, error) {
+	url := fmt.Sprintf(
+		"https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weather_code,apparent_temperature_max,apparent_temperature_min&hourly=temperature_2m",
+		lat,
+		lon,
+	)
+
+	return s.fetchOpenMeteo(url)
+}
+
+func (s *WeatherStore) fetchWeather(url string) (*WeatherResponse, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+
+	return fetchJSON[WeatherResponse](s.HTTP, req, 3)
+}
+
+func (s *WeatherStore) fetchForecast(url string) (*ForecastResponse, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+
+	return fetchJSON[ForecastResponse](s.HTTP, req, 3)
+}
+
+func (s *WeatherStore) fetchOpenMeteo(url string) (*OpenMeteoResponse, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+
+	return fetchJSON[OpenMeteoResponse](s.HTTP, req, 3)
+}
+
+func fetchJSON[T any](client *http.Client, req *http.Request, retries int) (*T, error) {
+	var resp *http.Response
+	var err error
+
+	for attempt := range retries {
+		resp, err = client.Do(req)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			defer resp.Body.Close()
+
+			var data T
+			if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+				return nil, fmt.Errorf("failed to decode JSON: %w", err)
+			}
+			return &data, nil
+		}
+
+		if resp != nil {
+			resp.Body.Close()
+		}
+
+		time.Sleep(time.Duration(attempt+1) * time.Second) // basic backoff
+	}
+
+	return nil, fmt.Errorf("request failed after %d attempts: %w", retries, err)
+}
+
+func buildURL(base string, params map[string]string) string {
+	u, _ := url.Parse(base)
+	q := u.Query()
+	for k, v := range params {
+		q.Set(k, v)
+	}
+	u.RawQuery = q.Encode()
+	return u.String()
 }

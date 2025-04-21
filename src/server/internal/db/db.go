@@ -8,8 +8,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const QueryTimeoutDuration = time.Second * 5
-
 func New(addr string, maxOpenConns, maxIdleConns int, maxIdleTime string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", addr)
 	if err != nil {
@@ -23,6 +21,7 @@ func New(addr string, maxOpenConns, maxIdleConns int, maxIdleTime string) (*sql.
 	if err != nil {
 		return nil, err
 	}
+
 	db.SetConnMaxIdleTime(duration)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -33,18 +32,4 @@ func New(addr string, maxOpenConns, maxIdleConns int, maxIdleTime string) (*sql.
 	}
 
 	return db, nil
-}
-
-func WithTx(db *sql.DB, ctx context.Context, fn func(*sql.Tx) error) error {
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	if err := fn(tx); err != nil {
-		_ = tx.Rollback()
-		return err
-	}
-
-	return tx.Commit()
 }

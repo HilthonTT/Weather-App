@@ -1,20 +1,19 @@
--- Step 1: Add column with a default value (to avoid NOT NULL issues on existing rows)
+-- Add the role_id column with a default value and foreign key constraint
 ALTER TABLE IF EXISTS users
 ADD COLUMN role_id INT REFERENCES roles(id) DEFAULT 1;
 
--- Step 2: Update existing rows with the actual 'user' role ID
+-- Set role_id for existing users to the ID of the 'user' role
 UPDATE users
 SET role_id = (
-    SELECT id
-    FROM roles
-    WHERE name = 'user'
-    LIMIT 1 -- just in case multiple exist
+  SELECT id
+  FROM roles
+  WHERE name = 'user'
 );
 
--- Step 3: Remove the default now that the column has been populated
+-- Remove the default value for role_id
 ALTER TABLE users
 ALTER COLUMN role_id DROP DEFAULT;
 
--- Step 4: Make the column NOT NULL
+-- Make role_id a NOT NULL column
 ALTER TABLE users
 ALTER COLUMN role_id SET NOT NULL;

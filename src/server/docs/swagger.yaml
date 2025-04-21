@@ -1,46 +1,21 @@
-basePath: /v1
 definitions:
-  settings.Settings:
+  main.LoginUserPayload:
     properties:
-      id:
-        type: integer
-      temperature:
-        $ref: '#/definitions/settings.TemperatureUnit'
-      time_display:
-        $ref: '#/definitions/settings.TimeFormat'
-      user_id:
-        type: integer
-      wind_speed:
-        $ref: '#/definitions/settings.WindSpeedUnit'
+      email:
+        maxLength: 255
+        type: string
+      password:
+        maxLength: 72
+        minLength: 3
+        type: string
+    required:
+    - email
+    - password
     type: object
-  settings.TemperatureUnit:
-    enum:
-    - Celsius
-    - Fahrenheit
-    type: string
-    x-enum-varnames:
-    - Celsius
-    - Fahrenheit
-  settings.TimeFormat:
-    enum:
-    - 12h
-    - 24h
-    type: string
-    x-enum-varnames:
-    - H12
-    - H24
-  settings.WindSpeedUnit:
-    enum:
-    - Km/h
-    - Miles/h
-    type: string
-    x-enum-varnames:
-    - Kmh
-    - Milesph
-  types.City:
+  store.City:
     properties:
       coord:
-        $ref: '#/definitions/types.Coord'
+        $ref: '#/definitions/store.Coord'
       country:
         type: string
       id:
@@ -56,19 +31,19 @@ definitions:
       timezone:
         type: integer
     type: object
-  types.Clouds:
+  store.Clouds:
     properties:
       all:
         type: integer
     type: object
-  types.Coord:
+  store.Coord:
     properties:
       lat:
         type: number
       lon:
         type: number
     type: object
-  types.DailyForecast:
+  store.DailyForecast:
     properties:
       apparent_temperature_max:
         items:
@@ -87,7 +62,7 @@ definitions:
           type: integer
         type: array
     type: object
-  types.DailyUnits:
+  store.DailyUnits:
     properties:
       apparent_temperature_max:
         type: string
@@ -98,45 +73,45 @@ definitions:
       weather_code:
         type: string
     type: object
-  types.ForecastItem:
+  store.ForecastItem:
     properties:
       clouds:
-        $ref: '#/definitions/types.Clouds'
+        $ref: '#/definitions/store.Clouds'
       dt:
         type: integer
       dt_txt:
         type: string
       main:
-        $ref: '#/definitions/types.Main'
+        $ref: '#/definitions/store.Main'
       pop:
         type: number
       sys:
-        $ref: '#/definitions/types.Sys'
+        $ref: '#/definitions/store.Sys'
       visibility:
         type: integer
       weather:
         items:
-          $ref: '#/definitions/types.Weather'
+          $ref: '#/definitions/store.Weather'
         type: array
       wind:
-        $ref: '#/definitions/types.Wind'
+        $ref: '#/definitions/store.Wind'
     type: object
-  types.ForecastResponse:
+  store.ForecastResponse:
     properties:
       city:
-        $ref: '#/definitions/types.City'
+        $ref: '#/definitions/store.City'
       cnt:
         type: integer
       cod:
         type: string
       list:
         items:
-          $ref: '#/definitions/types.ForecastItem'
+          $ref: '#/definitions/store.ForecastItem'
         type: array
       message:
         type: integer
     type: object
-  types.HourlyForecast:
+  store.HourlyForecast:
     properties:
       temperature_2m:
         items:
@@ -147,14 +122,14 @@ definitions:
           type: string
         type: array
     type: object
-  types.HourlyUnits:
+  store.HourlyUnits:
     properties:
       temperature_2m:
         type: string
       time:
         type: string
     type: object
-  types.Main:
+  store.Main:
     properties:
       feels_like:
         type: number
@@ -175,20 +150,20 @@ definitions:
       temp_min:
         type: number
     type: object
-  types.OpenMeteoResponse:
+  store.OpenMeteoResponse:
     properties:
       daily:
-        $ref: '#/definitions/types.DailyForecast'
+        $ref: '#/definitions/store.DailyForecast'
       daily_units:
-        $ref: '#/definitions/types.DailyUnits'
+        $ref: '#/definitions/store.DailyUnits'
       elevation:
         type: number
       generationtime_ms:
         type: number
       hourly:
-        $ref: '#/definitions/types.HourlyForecast'
+        $ref: '#/definitions/store.HourlyForecast'
       hourly_units:
-        $ref: '#/definitions/types.HourlyUnits'
+        $ref: '#/definitions/store.HourlyUnits'
       latitude:
         type: number
       longitude:
@@ -200,12 +175,40 @@ definitions:
       utc_offset_seconds:
         type: integer
     type: object
-  types.Sys:
+  store.Role:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      level:
+        type: integer
+      name:
+        type: string
+    type: object
+  store.Sys:
     properties:
       pod:
         type: string
     type: object
-  types.Weather:
+  store.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      email_verified:
+        type: boolean
+      id:
+        type: integer
+      role:
+        $ref: '#/definitions/store.Role'
+      role_id:
+        type: integer
+      username:
+        type: string
+    type: object
+  store.Weather:
     properties:
       description:
         type: string
@@ -216,14 +219,14 @@ definitions:
       main:
         type: string
     type: object
-  types.WeatherResponse:
+  store.WeatherResponse:
     properties:
       clouds:
-        $ref: '#/definitions/types.Clouds'
+        $ref: '#/definitions/store.Clouds'
       cod:
         type: integer
       coord:
-        $ref: '#/definitions/types.Coord'
+        $ref: '#/definitions/store.Coord'
       dt:
         description: Timestamp
         type: integer
@@ -263,12 +266,12 @@ definitions:
         type: integer
       weather:
         items:
-          $ref: '#/definitions/types.Weather'
+          $ref: '#/definitions/store.Weather'
         type: array
       wind:
-        $ref: '#/definitions/types.Wind'
+        $ref: '#/definitions/store.Wind'
     type: object
-  types.Wind:
+  store.Wind:
     properties:
       deg:
         type: integer
@@ -277,76 +280,40 @@ definitions:
       speed:
         type: number
     type: object
-  users.LoginUserPayload:
-    properties:
-      email:
-        maxLength: 255
-        type: string
-      password:
-        maxLength: 72
-        minLength: 6
-        type: string
-    required:
-    - email
-    - password
-    type: object
-  users.RegisterUserPayload:
-    properties:
-      email:
-        maxLength: 255
-        type: string
-      password:
-        maxLength: 72
-        minLength: 6
-        type: string
-      username:
-        maxLength: 100
-        type: string
-    required:
-    - email
-    - password
-    - username
-    type: object
-  users.Role:
-    properties:
-      description:
-        type: string
-      id:
-        type: integer
-      level:
-        type: integer
-      name:
-        type: string
-    type: object
-  users.User:
-    properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      id:
-        type: integer
-      is_active:
-        type: boolean
-      role:
-        $ref: '#/definitions/users.Role'
-      role_id:
-        type: integer
-      username:
-        type: string
-    type: object
 info:
-  contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
-  description: API for fetching weather data
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://swagger.io/terms/
-  title: Weather API
+  contact: {}
 paths:
+  /authentication/login:
+    post:
+      consumes:
+      - application/json
+      description: Creates a token for a user
+      parameters:
+      - description: User credentials
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/main.LoginUserPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Creates a token
+      tags:
+      - authentication
   /health:
     get:
       description: Healthcheck endpoint
@@ -360,84 +327,36 @@ paths:
       summary: Healthcheck
       tags:
       - ops
-  /settings:
+  /users/{id}:
     get:
       consumes:
       - application/json
-      description: Fetches the settings associated with the authenticated user
+      description: Fetches a user profile by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/settings.Settings'
+            $ref: '#/definitions/store.User'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
         "500":
           description: Internal Server Error
           schema: {}
       security:
-      - BearerAuth: []
-      summary: Retrieve user settings
-      tags:
-      - settings
-  /users/login:
-    post:
-      consumes:
-      - application/json
-      description: Authenticates a user with email and password, and returns a JWT
-        token upon successful login
-      parameters:
-      - description: User login credentials
-        in: body
-        name: payload
-        required: true
-        schema:
-          $ref: '#/definitions/users.LoginUserPayload'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: JWT token"   // Change 201 to 200
-          schema:
-            type: string
-        "400":
-          description: Bad Request
-          schema: {}
-        "401":
-          description: Unauthorized
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Logs in a user
-      tags:
-      - users
-  /users/register:
-    post:
-      consumes:
-      - application/json
-      description: Creates a new user account with a username, email, and password
-      parameters:
-      - description: New user registration data
-        in: body
-        name: payload
-        required: true
-        schema:
-          $ref: '#/definitions/users.RegisterUserPayload'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created user object
-          schema:
-            $ref: '#/definitions/users.User'
-        "400":
-          description: Bad Request
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Registers a new user
+      - ApiKeyAuth: []
+      summary: Fetches a user profile
       tags:
       - users
   /weather/{city}:
@@ -457,7 +376,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/types.WeatherResponse'
+            $ref: '#/definitions/store.WeatherResponse'
         "400":
           description: Bad Request
           schema: {}
@@ -492,7 +411,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/types.WeatherResponse'
+            $ref: '#/definitions/store.WeatherResponse'
         "400":
           description: Bad Request
           schema: {}
@@ -522,7 +441,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/types.ForecastResponse'
+            $ref: '#/definitions/store.ForecastResponse'
         "400":
           description: Bad Request
           schema: {}
@@ -558,7 +477,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/types.ForecastResponse'
+            $ref: '#/definitions/store.ForecastResponse'
         "400":
           description: Bad Request
           schema: {}
@@ -593,7 +512,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/types.OpenMeteoResponse'
+            $ref: '#/definitions/store.OpenMeteoResponse'
         "400":
           description: Bad Request
           schema: {}
@@ -606,10 +525,4 @@ paths:
       summary: Fetches open meteo by coordinates (latitude and longitude)
       tags:
       - weather
-securityDefinitions:
-  ApiKeyAuth:
-    description: API key authentication for accessing weather data
-    in: header
-    name: Authorization
-    type: apiKey
 swagger: "2.0"

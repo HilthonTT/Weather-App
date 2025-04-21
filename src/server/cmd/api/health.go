@@ -1,10 +1,6 @@
 package main
 
-import (
-	"net/http"
-
-	"github.com/hilthontt/weather/internal/utils"
-)
+import "net/http"
 
 // healthcheckHandler godoc
 //
@@ -17,11 +13,11 @@ import (
 func (app *application) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	data := map[string]string{
 		"status":  "ok",
-		"env":     app.config.Env,
+		"env":     app.config.env,
 		"version": version,
 	}
 
-	if err := utils.JsonResponse(w, http.StatusOK, data); err != nil {
-		utils.InternalServerError(w, r, err, app.logger)
+	if err := app.jsonResponse(w, http.StatusOK, data); err != nil {
+		app.internalServerError(w, r, err)
 	}
 }
