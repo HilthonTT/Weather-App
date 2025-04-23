@@ -5,6 +5,7 @@ import 'package:weather_app/common/constants/text_styles.dart';
 import 'package:weather_app/common/extensions/datetime.dart';
 import 'package:weather_app/common/extensions/string.dart';
 import 'package:weather_app/common/utils/get_weather_icon.dart';
+import 'package:weather_app/common/widgets/custom_back_button.dart';
 import 'package:weather_app/common/widgets/gradient_container.dart';
 import 'package:weather_app/modules/weather/presentation/providers/get_weather_by_city.dart';
 import 'package:weather_app/modules/weather/presentation/widgets/weather_info.dart';
@@ -71,18 +72,7 @@ final class DetailPage extends ConsumerWidget {
                 ],
               ),
 
-              SafeArea(
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ),
-                ),
-              ),
+              const CustomBackButton(),
             ],
           ),
         );

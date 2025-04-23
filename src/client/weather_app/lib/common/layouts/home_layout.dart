@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:weather_app/common/constants/app_colors.dart';
+import 'package:weather_app/modules/users/presentation/pages/settings_page.dart';
 import 'package:weather_app/modules/weather/presentation/pages/forecast_page.dart';
 import 'package:weather_app/modules/weather/presentation/pages/search_page.dart';
 import 'package:weather_app/modules/weather/presentation/pages/weather_page.dart';
 
 final class HomeLayout extends StatefulWidget {
+  static route() => MaterialPageRoute(builder: (context) => const HomeLayout());
+
   const HomeLayout({super.key});
 
   @override
@@ -39,7 +42,7 @@ final class _HomeLayoutState extends State<HomeLayout> {
     WeatherPage(),
     SearchPage(),
     ForecastPage(),
-    Center(child: Text('Settings Screen')),
+    SettingsPage(),
   ];
 
   int _currentPageIndex = 0;
