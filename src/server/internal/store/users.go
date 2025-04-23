@@ -93,11 +93,18 @@ func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 }
 
 func (s *UserStore) GetByID(ctx context.Context, userID int64) (*User, error) {
+	// query := `
+	// 	SELECT users.id, username, email, password, created_at, roles.*
+	// 	FROM users
+	// 	JOIN roles ON (users.role_id = roles.id)
+	// 	WHERE users.id = $1 AND email_verified = true
+	// `
+
 	query := `
-		SELECT id, username, email, password, created_at, roles.*
+		SELECT users.id, username, email, password, created_at, roles.*
 		FROM users
 		JOIN roles ON (users.role_id = roles.id)
-		WHERE id = $1 AND email_verified = true
+		WHERE users.id = $1
 	`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
@@ -244,7 +251,6 @@ func (s *UserStore) GetByEmail(ctx context.Context, email string) (*User, error)
 	)
 	if err != nil {
 		switch err {
-
 		case sql.ErrNoRows:
 			return nil, ErrNotFound
 		default:

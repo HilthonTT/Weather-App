@@ -17,7 +17,25 @@ import (
 	"go.uber.org/zap"
 )
 
-const version = "1.1.0"
+const version = "1.0.0"
+
+//	@title			Weather API
+//	@description	This is the Weather API for a weather app system.
+//	@termsOfService	http://swagger.io/terms/
+
+//	@contact.name	API Support
+//	@contact.url	http://www.swagger.io/support
+//	@contact.email	support@swagger.io
+
+//	@license.name	MIT
+//	@license.url	https://opensource.org/licenses/MIT
+
+//	@BasePath					/v1
+//
+//	@securityDefinitions.apikey	ApiKeyAuth
+//	@in							header
+//	@name						Authorization
+//	@description				Use your API key in the Authorization header
 
 func main() {
 	cfg := config{

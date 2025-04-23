@@ -9,7 +9,16 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -155,6 +164,55 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/store.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/users/{id}/settings": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Retrieves the settings for a user by their ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Fetches user settings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/store.Settings"
                         }
                     },
                     "400": {
@@ -752,6 +810,37 @@ const docTemplate = `{
                 }
             }
         },
+        "store.Settings": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "speed_format": {
+                    "$ref": "#/definitions/store.SpeedFormat"
+                },
+                "temp_format": {
+                    "$ref": "#/definitions/store.TempFormat"
+                },
+                "time_format": {
+                    "$ref": "#/definitions/store.TimeFormat"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "store.SpeedFormat": {
+            "type": "string",
+            "enum": [
+                "kmph",
+                "mph"
+            ],
+            "x-enum-varnames": [
+                "Kmph",
+                "Mph"
+            ]
+        },
         "store.Sys": {
             "type": "object",
             "properties": {
@@ -759,6 +848,28 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "store.TempFormat": {
+            "type": "string",
+            "enum": [
+                "celsius",
+                "fahrenheit"
+            ],
+            "x-enum-varnames": [
+                "Celsius",
+                "Fahrenheit"
+            ]
+        },
+        "store.TimeFormat": {
+            "type": "string",
+            "enum": [
+                "24h",
+                "12h"
+            ],
+            "x-enum-varnames": [
+                "TwentyFourHour",
+                "TwelveHour"
+            ]
         },
         "store.User": {
             "type": "object",
@@ -896,6 +1007,14 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "description": "Use your API key in the Authorization header",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
@@ -903,10 +1022,10 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "",
 	Host:             "",
-	BasePath:         "",
+	BasePath:         "/v1",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Weather API",
+	Description:      "This is the Weather API for a weather app system.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

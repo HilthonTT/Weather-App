@@ -33,12 +33,18 @@ type Storage struct {
 		GetForecastByCoords(float64, float64) (*ForecastResponse, error)
 		GetOpenMeteoByCoords(float64, float64) (*OpenMeteoResponse, error)
 	}
+	Settings interface {
+		Create(ctx context.Context, settings *Settings) error
+		GetByUserID(ctx context.Context, userID int64) (*Settings, error)
+		UpdateByUserID(ctx context.Context, settings *Settings) error
+	}
 }
 
 func NewStorage(db *sql.DB, openWeatherApiKey string) Storage {
 	return Storage{
-		Users: &UserStore{db},
-		Roles: &RoleStore{db},
+		Users:    &UserStore{db},
+		Roles:    &RoleStore{db},
+		Settings: &SettingsStore{db},
 		Weathers: &WeatherStore{
 			openWeatherApiKey,
 			&http.Client{

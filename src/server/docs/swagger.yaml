@@ -1,3 +1,4 @@
+basePath: /v1
 definitions:
   main.LoginUserPayload:
     properties:
@@ -222,11 +223,48 @@ definitions:
       name:
         type: string
     type: object
+  store.Settings:
+    properties:
+      id:
+        type: integer
+      speed_format:
+        $ref: '#/definitions/store.SpeedFormat'
+      temp_format:
+        $ref: '#/definitions/store.TempFormat'
+      time_format:
+        $ref: '#/definitions/store.TimeFormat'
+      user_id:
+        type: integer
+    type: object
+  store.SpeedFormat:
+    enum:
+    - kmph
+    - mph
+    type: string
+    x-enum-varnames:
+    - Kmph
+    - Mph
   store.Sys:
     properties:
       pod:
         type: string
     type: object
+  store.TempFormat:
+    enum:
+    - celsius
+    - fahrenheit
+    type: string
+    x-enum-varnames:
+    - Celsius
+    - Fahrenheit
+  store.TimeFormat:
+    enum:
+    - 24h
+    - 12h
+    type: string
+    x-enum-varnames:
+    - TwentyFourHour
+    - TwelveHour
   store.User:
     properties:
       created_at:
@@ -317,7 +355,16 @@ definitions:
         type: number
     type: object
 info:
-  contact: {}
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is the Weather API for a weather app system.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Weather API
 paths:
   /authentication/login:
     post:
@@ -421,6 +468,38 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Fetches a user profile
+      tags:
+      - users
+  /users/{id}/settings:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the settings for a user by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/store.Settings'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Fetches user settings
       tags:
       - users
   /weather/{city}:
@@ -589,4 +668,10 @@ paths:
       summary: Fetches open meteo by coordinates (latitude and longitude)
       tags:
       - weather
+securityDefinitions:
+  ApiKeyAuth:
+    description: Use your API key in the Authorization header
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

@@ -138,6 +138,20 @@ func (app *application) mount() http.Handler {
 
 			r.Get("/open-meteo/coords/{latitude}/{longitude}", app.handleGetOpenMeteoByCoordinates)
 		})
+
+		r.Route("/users", func(r chi.Router) {
+			r.Use(app.AuthTokenMiddleware)
+
+			r.Route("/{userID}", func(r chi.Router) {
+				r.Get("/", app.getUserHandler)
+
+				r.Route("/settings", func(r chi.Router) {
+					r.Use(app.settingsContextMiddleware)
+
+					r.Get("/", app.getSettingsHandler)
+				})
+			})
+		})
 	})
 
 	return r
