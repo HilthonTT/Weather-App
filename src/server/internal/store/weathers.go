@@ -148,12 +148,15 @@ type WeatherStore struct {
 	HTTP   *http.Client
 }
 
+const openWeatherURL = "https://api.openweathermap.org/data/2.5/weather"
+const openMeteoURL = "https://api.open-meteo.com/v1/forecast"
+
 func (s *WeatherStore) GetWeather(city string) (*WeatherResponse, error) {
 	if s.APIKey == "" {
 		return nil, errors.New("OpenWeather API key is required")
 	}
 
-	url := buildURL("https://api.openweathermap.org/data/2.5/weather", map[string]string{
+	url := buildURL(openWeatherURL, map[string]string{
 		"q":     city,
 		"appid": s.APIKey,
 		"units": "metris",
@@ -167,7 +170,7 @@ func (s *WeatherStore) GetWeatherByCoords(lat, lon float64) (*WeatherResponse, e
 		return nil, errors.New("OpenWeather API key is required")
 	}
 
-	url := buildURL("https://api.openweathermap.org/data/2.5/weather", map[string]string{
+	url := buildURL(openWeatherURL, map[string]string{
 		"lat":   fmt.Sprintf("%f", lat),
 		"lon":   fmt.Sprintf("%f", lon),
 		"appid": s.APIKey,
@@ -178,7 +181,7 @@ func (s *WeatherStore) GetWeatherByCoords(lat, lon float64) (*WeatherResponse, e
 }
 
 func (s *WeatherStore) GetForecast(city string) (*ForecastResponse, error) {
-	url := buildURL("https://api.openweathermap.org/data/2.5/forecast", map[string]string{
+	url := buildURL(openWeatherURL, map[string]string{
 		"q":     city,
 		"appid": s.APIKey,
 		"units": "metric",
@@ -188,7 +191,7 @@ func (s *WeatherStore) GetForecast(city string) (*ForecastResponse, error) {
 }
 
 func (s *WeatherStore) GetForecastByCoords(lat, lon float64) (*ForecastResponse, error) {
-	url := buildURL("https://api.openweathermap.org/data/2.5/forecast", map[string]string{
+	url := buildURL(openWeatherURL, map[string]string{
 		"lat":   fmt.Sprintf("%f", lat),
 		"lon":   fmt.Sprintf("%f", lon),
 		"appid": s.APIKey,
@@ -199,11 +202,12 @@ func (s *WeatherStore) GetForecastByCoords(lat, lon float64) (*ForecastResponse,
 }
 
 func (s *WeatherStore) GetOpenMeteoByCoords(lat, lon float64) (*OpenMeteoResponse, error) {
-	url := fmt.Sprintf(
-		"https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weather_code,apparent_temperature_max,apparent_temperature_min&hourly=temperature_2m",
-		lat,
-		lon,
-	)
+	url := buildURL(openMeteoURL, map[string]string{
+		"latitude":  fmt.Sprintf("%f", lat),
+		"longitude": fmt.Sprintf("%f", lon),
+		"daily":     "weather_code,apparent_temperature_max,apparent_temperature_min",
+		"hourly":    "temperature_2m",
+	})
 
 	return s.fetchOpenMeteo(url)
 }
