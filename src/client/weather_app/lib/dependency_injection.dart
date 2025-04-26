@@ -1,6 +1,9 @@
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:weather_app/modules/users/data/datasources/user_remote_datasource.dart';
+import 'package:weather_app/modules/users/data/repositories/user_repository_impl.dart';
+import 'package:weather_app/modules/users/domain/repositories/user_repository.dart';
 import 'package:weather_app/modules/weather/data/datasources/location_local_data_source.dart';
 import 'package:weather_app/modules/weather/data/datasources/weather_remote_datasource.dart';
 import 'package:weather_app/modules/weather/data/repositories/weather_repository_impl.dart';
@@ -17,6 +20,7 @@ Future<void> initDependencies() async {
   await _initServices();
 
   _initWeather();
+  _initUser();
 }
 
 Future<void> _initServices() async {
@@ -49,4 +53,14 @@ void _initWeather() {
       () => GetForecastByCity(weatherRepository: serviceLocator()),
     )
     ..registerFactory(() => GetOpenMeteo(weatherRepository: serviceLocator()));
+}
+
+void _initUser() {
+  serviceLocator
+    ..registerFactory<UserRemoteDatasource>(
+      () => UserRemoteDatasourceImpl(box: serviceLocator()),
+    )
+    ..registerFactory<UserRepository>(
+      () => UserRepositoryImpl(userRemoteDatasource: serviceLocator()),
+    );
 }

@@ -49,3 +49,30 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 		app.internalServerError(w, r, err)
 	}
 }
+
+// GetUser godoc
+//
+//	@Summary		Fetches the current user's profile
+//	@Description	Fetches the current's user profile
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	store.User
+//	@Failure		400	{object}	error
+//	@Failure		404	{object}	error
+//	@Failure		500	{object}	error
+//	@Security		ApiKeyAuth
+//	@Router			/users/me [get]
+func (app *application) getCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
+	currentUser := getUserFromContext(r)
+
+	if err := app.jsonResponse(w, http.StatusOK, currentUser); err != nil {
+		app.internalServerError(w, r, err)
+	}
+}
+
+func getUserFromContext(r *http.Request) *store.User {
+	user, _ := r.Context().Value(userCtx).(*store.User)
+
+	return user
+}

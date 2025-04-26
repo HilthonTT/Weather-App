@@ -36,7 +36,7 @@ type Storage struct {
 	Settings interface {
 		Create(ctx context.Context, settings *Settings) error
 		GetByUserID(ctx context.Context, userID int64) (*Settings, error)
-		UpdateByUserID(ctx context.Context, settings *Settings) error
+		Update(ctx context.Context, settings *Settings) error
 	}
 }
 

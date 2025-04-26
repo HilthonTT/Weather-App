@@ -33,7 +33,61 @@ func (app *application) getSettingsHandler(w http.ResponseWriter, r *http.Reques
 
 	if err := app.jsonResponse(w, http.StatusOK, settings); err != nil {
 		app.internalServerError(w, r, err)
+	}
+}
+
+type UpdateSettingsPayload struct {
+	TempFormat  store.TempFormat  `json:"temp_format" validate:"omitempty,oneof=celsius fahrenheit"`
+	TimeFormat  store.TimeFormat  `json:"time_format" validate:"omitempty,oneof=24h 12h"`
+	SpeedFormat store.SpeedFormat `json:"speed_format" validate:"omitempty,oneof=kmph mph"`
+}
+
+// UpdateSettings godoc
+//
+//	@Summary		Update user settings
+//	@Description	Partially updates the settings for a user.
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int						true	"User ID"
+//	@Param			payload	body		UpdateSettingsPayload	true	"Settings to update"
+//	@Success		200		{object}	store.Settings
+//	@Failure		400		{object}	error
+//	@Failure		404		{object}	error
+//	@Failure		500		{object}	error
+//	@Security		ApiKeyAuth
+//	@Router			/users/{id}/settings [patch]
+func (app *application) updateSettings(w http.ResponseWriter, r *http.Request) {
+	var payload UpdateSettingsPayload
+	if err := readJSON(w, r, &payload); err != nil {
+		app.badRequestResponse(w, r, err)
 		return
+	}
+
+	if err := Validate.Struct(payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	settings := getSettingsFromCtx(r)
+
+	settings.Update(payload.TempFormat, payload.TimeFormat, payload.SpeedFormat)
+
+	if settings == nil {
+		app.notFoundResponse(w, r, errors.New("Settings not found"))
+		return
+	}
+
+	ctx := r.Context()
+
+	err := app.store.Settings.Update(ctx, settings)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	if err := app.jsonResponse(w, http.StatusOK, settings); err != nil {
+		app.internalServerError(w, r, err)
 	}
 }
 

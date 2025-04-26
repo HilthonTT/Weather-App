@@ -29,6 +29,12 @@ type Settings struct {
 	SpeedFormat SpeedFormat `json:"speed_format"`
 }
 
+func (s *Settings) Update(tempFormat TempFormat, timeFormat TimeFormat, speedFormat SpeedFormat) {
+	s.TempFormat = tempFormat
+	s.TimeFormat = timeFormat
+	s.SpeedFormat = speedFormat
+}
+
 type SettingsStore struct {
 	db *sql.DB
 }
@@ -90,7 +96,7 @@ func (s *SettingsStore) GetByUserID(ctx context.Context, userID int64) (*Setting
 	return &settings, nil
 }
 
-func (s *SettingsStore) UpdateByUserID(ctx context.Context, settings *Settings) error {
+func (s *SettingsStore) Update(ctx context.Context, settings *Settings) error {
 	query := `
 		UPDATE settings
 		SET temp_format = $1, time_format = $2, speed_format = $3

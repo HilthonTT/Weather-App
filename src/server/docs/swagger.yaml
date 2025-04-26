@@ -30,6 +30,27 @@ definitions:
     - password
     - username
     type: object
+  main.UpdateSettingsPayload:
+    properties:
+      speed_format:
+        allOf:
+        - $ref: '#/definitions/store.SpeedFormat'
+        enum:
+        - kmph
+        - mph
+      temp_format:
+        allOf:
+        - $ref: '#/definitions/store.TempFormat'
+        enum:
+        - celsius
+        - fahrenheit
+      time_format:
+        allOf:
+        - $ref: '#/definitions/store.TimeFormat'
+        enum:
+        - 24h
+        - 12h
+    type: object
   main.UserWithToken:
     properties:
       created_at:
@@ -500,6 +521,69 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Fetches user settings
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      description: Partially updates the settings for a user.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Settings to update
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/main.UpdateSettingsPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/store.Settings'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Update user settings
+      tags:
+      - users
+  /users/me:
+    get:
+      consumes:
+      - application/json
+      description: Fetches the current's user profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/store.User'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Fetches the current user's profile
       tags:
       - users
   /weather/{city}:
