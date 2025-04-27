@@ -30,21 +30,27 @@ final class UserRemoteDatasourceImpl implements UserRemoteDatasource {
 
   @override
   Future<UserModel?> getCurrent() async {
-    final jwtToken = box.get(UserConstants.jwtTokenKey) as String?;
-    if (jwtToken == null || jwtToken.isEmpty) {
-      return null;
+    try {
+      final jwtToken = box.get(UserConstants.jwtTokenKey) as String?;
+      if (jwtToken == null || jwtToken.isEmpty) {
+        return null;
+      }
+
+      const url = "${Constants.apiUrl}/v1/users/me";
+
+      final response = await _dio.get(
+        url,
+        options: Options(headers: {'Authorization': 'Bearer $jwtToken'}),
+      );
+
+      final user = UserModel.fromJson(response.data['data']);
+
+      return user;
+    } catch (e) {
+      debugPrint(e.toString());
+
+      throw ServerException('Failed to fetch current user');
     }
-
-    const url = "${Constants.apiUrl}/v1/users/me";
-
-    final response = await _dio.get(
-      url,
-      options: Options(headers: {'Authorization': 'Bearer $jwtToken'}),
-    );
-
-    final user = UserModel.fromJson(response.data['data']);
-
-    return user;
   }
 
   @override

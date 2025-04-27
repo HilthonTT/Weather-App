@@ -149,6 +149,7 @@ type WeatherStore struct {
 }
 
 const openWeatherURL = "https://api.openweathermap.org/data/2.5/weather"
+const openWeatherForecastURL = "https://api.openweathermap.org/data/2.5/forecast"
 const openMeteoURL = "https://api.open-meteo.com/v1/forecast"
 
 func (s *WeatherStore) GetWeather(city string) (*WeatherResponse, error) {
@@ -181,7 +182,7 @@ func (s *WeatherStore) GetWeatherByCoords(lat, lon float64) (*WeatherResponse, e
 }
 
 func (s *WeatherStore) GetForecast(city string) (*ForecastResponse, error) {
-	url := buildURL(openWeatherURL, map[string]string{
+	url := buildURL(openWeatherForecastURL, map[string]string{
 		"q":     city,
 		"appid": s.APIKey,
 		"units": "metric",
@@ -191,7 +192,7 @@ func (s *WeatherStore) GetForecast(city string) (*ForecastResponse, error) {
 }
 
 func (s *WeatherStore) GetForecastByCoords(lat, lon float64) (*ForecastResponse, error) {
-	url := buildURL(openWeatherURL, map[string]string{
+	url := buildURL(openWeatherForecastURL, map[string]string{
 		"lat":   fmt.Sprintf("%f", lat),
 		"lon":   fmt.Sprintf("%f", lon),
 		"appid": s.APIKey,
