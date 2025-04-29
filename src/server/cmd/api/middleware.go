@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/hilthontt/weather/internal/store"
 )
 
@@ -133,4 +135,114 @@ func (app *application) getUser(ctx context.Context, userID int64) (*store.User,
 	}
 
 	return user, nil
+}
+
+type ErrorResponse struct {
+	Type      string `json:"type"`
+	Title     string `json:"title"`
+	Status    int    `json:"status"`
+	Instance  string `json:"instance"`
+	TraceID   string `json:"traceId"`
+	RequestID string `json:"requestId"`
+}
+
+type ResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rw *ResponseWriter) WriteHeader(statusCode int) {
+	rw.statusCode = statusCode
+	rw.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (app *application) statusCodePagesMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rw := &ResponseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+
+		// Generate traceId and requestId
+		traceId := uuid.New().String()
+		requestId := uuid.New().String()
+
+		// Add traceId and requestId to the context for use in the error response
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "traceId", traceId)
+		ctx = context.WithValue(ctx, "requestId", requestId)
+
+		// Call the next handler
+		next.ServeHTTP(rw, r.WithContext(ctx))
+
+		// Check the status code and serve the appropriate response for error codes
+		if rw.statusCode == http.StatusInternalServerError ||
+			rw.statusCode == http.StatusBadRequest || rw.statusCode == http.StatusConflict ||
+			rw.statusCode == http.StatusForbidden {
+			// Safely retrieve the traceId and requestId from context
+			traceID, traceIDExists := r.Context().Value("traceId").(string)
+			requestID, requestIDExists := r.Context().Value("requestId").(string)
+
+			// If the context values don't exist, use default empty string
+			if !traceIDExists {
+				traceID = "unknown"
+			}
+			if !requestIDExists {
+				requestID = "unknown"
+			}
+
+			instance := fmt.Sprintf("%s %s", r.Method, r.URL.Path)
+
+			// Determine the error type URL based on the status code
+			var errorType string
+			switch rw.statusCode {
+			case http.StatusConflict:
+				errorType = "https://tools.ietf.org/html/rfc7231#section-6.5.8"
+			case http.StatusForbidden:
+				errorType = "https://tools.ietf.org/html/rfc7231#section-6.5.3"
+			case http.StatusBadRequest:
+				errorType = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+			default:
+				errorType = "https://tools.ietf.org/html/rfc7231#section-6.6.1" // General error type
+			}
+
+			// Create the error response
+			errResponse := ErrorResponse{
+				Type:      errorType,
+				Title:     http.StatusText(rw.statusCode),
+				Status:    rw.statusCode,
+				Instance:  instance,
+				TraceID:   traceID,
+				RequestID: requestID,
+			}
+
+			// Send the error response
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(rw.statusCode)
+			json.NewEncoder(w).Encode(errResponse)
+		}
+	})
+}
+
+func (app *application) notFoundHandler(w http.ResponseWriter, r *http.Request) {
+
+	// Generate traceId and requestId
+	traceId := uuid.New().String()
+	requestId := uuid.New().String()
+
+	// Add traceId and requestId to the context for use in the error response
+	ctx := r.Context()
+	ctx = context.WithValue(ctx, "traceId", traceId)
+	ctx = context.WithValue(ctx, "requestId", requestId)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
+
+	errResponse := ErrorResponse{
+		Type:      "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+		Title:     "Not Found",
+		Status:    http.StatusNotFound,
+		Instance:  fmt.Sprintf("%s %s", r.Method, r.URL.Path),
+		TraceID:   traceId,
+		RequestID: requestId,
+	}
+
+	json.NewEncoder(w).Encode(errResponse)
 }
