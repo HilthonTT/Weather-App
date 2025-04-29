@@ -26,7 +26,14 @@ final class _SettingsPageState extends ConsumerState<SettingsPage> {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             Navigator.push(context, LoginPage.route());
           });
-          return const SizedBox();
+          return const GradientContainer(
+            children: [
+              Align(
+                alignment: Alignment.center,
+                child: CircularProgressIndicator(),
+              ),
+            ],
+          );
         }
 
         return Scaffold(
