@@ -19,6 +19,7 @@ import (
 	"github.com/hilthontt/weather/internal/ratelimiter"
 	"github.com/hilthontt/weather/internal/store"
 	"github.com/hilthontt/weather/internal/store/cache"
+	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
 
 	"github.com/hilthontt/weather/docs"
@@ -36,6 +37,8 @@ type application struct {
 }
 
 type config struct {
+	serviceName string
+	jaegerAddr  string
 	addr        string
 	db          dbConfig
 	env         string
@@ -116,6 +119,12 @@ func (app *application) mount() http.Handler {
 	if app.config.rateLimiter.Enabled {
 		r.Use(app.RateLimiterMiddleware)
 	}
+
+	tracer := otel.Tracer("dynamic-endpoints")
+
+	telemetryMiddleware := NewTelemetryMiddleware(tracer)
+
+	r.Use(telemetryMiddleware.Middleware)
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", app.healthCheckHandler)

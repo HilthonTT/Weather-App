@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:weather_app/common/layouts/home_layout.dart';
 
 final class CustomBackButton extends StatelessWidget {
   const CustomBackButton({super.key});
@@ -13,7 +12,7 @@ final class CustomBackButton extends StatelessWidget {
           padding: const EdgeInsets.all(24.0),
           child: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.of(context).push(HomeLayout.route()),
+            onPressed: () => Navigator.of(context).pop(),
           ),
         ),
       ),

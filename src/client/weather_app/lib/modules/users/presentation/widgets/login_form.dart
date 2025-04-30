@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:weather_app/common/layouts/home_layout.dart';
 import 'package:weather_app/common/utils/show_snackbar.dart';
 import 'package:weather_app/common/widgets/rounded_button.dart';
 import 'package:weather_app/common/widgets/rounded_text_field.dart';
 import 'package:weather_app/modules/users/presentation/bloc/user_bloc.dart';
 import 'package:weather_app/modules/users/presentation/pages/register_page.dart';
-import 'package:weather_app/modules/users/presentation/providers/get_current_user_provider.dart';
 
 final class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({super.key});
@@ -90,7 +88,7 @@ final class _LoginFormState extends ConsumerState<LoginForm> {
                 disabled: isLoading,
                 text: 'Nevermind',
                 onPressed: () {
-                  Navigator.push(context, HomeLayout.route());
+                  Navigator.of(context).pop();
                 },
               ),
               const SizedBox(height: 16.0),

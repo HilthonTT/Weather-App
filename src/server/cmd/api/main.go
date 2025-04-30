@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"expvar"
 	"runtime"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/hilthontt/weather/internal/auth"
 	"github.com/hilthontt/weather/internal/db"
 	"github.com/hilthontt/weather/internal/env"
+	"github.com/hilthontt/weather/internal/logging"
 	"github.com/hilthontt/weather/internal/mailer"
 	"github.com/hilthontt/weather/internal/ratelimiter"
 	"github.com/hilthontt/weather/internal/store"
@@ -39,6 +41,8 @@ const version = "1.0.0"
 
 func main() {
 	cfg := config{
+		serviceName: "weather",
+		jaegerAddr:  env.GetString("JAEGER_ADDR", "localhost:4318"),
 		addr:        env.GetString("ADDR", ":8080"),
 		apiURL:      env.GetString("EXTERNAL_URL", "localhost:8080"),
 		frontendURL: env.GetString("FRONTEND_URL", "http://localhost:5173"),
@@ -87,6 +91,11 @@ func main() {
 	// Logger
 	logger := zap.Must(zap.NewProduction()).Sugar()
 	defer logger.Sync()
+
+	err := logging.SetGlobalTracer(context.TODO(), cfg.serviceName, cfg.jaegerAddr)
+	if err != nil {
+		logger.Fatal("failed to set global tracer")
+	}
 
 	// Main Database
 	db, err := db.New(

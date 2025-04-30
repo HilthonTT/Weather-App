@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:weather_app/common/layouts/home_layout.dart';
 import 'package:weather_app/common/widgets/rounded_button.dart';
 import 'package:weather_app/common/widgets/rounded_text_field.dart';
 import 'package:weather_app/modules/users/presentation/pages/login_page.dart';
@@ -12,6 +11,8 @@ final class RegisterForm extends StatefulWidget {
 }
 
 final class _RegisterFormState extends State<RegisterForm> {
+  final formKey = GlobalKey<FormState>();
+
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
@@ -28,6 +29,7 @@ final class _RegisterFormState extends State<RegisterForm> {
   @override
   Widget build(BuildContext context) {
     return Form(
+      key: formKey,
       child: Column(
         children: [
           RoundedTextField(controller: _emailController, hintText: "Email"),
@@ -61,7 +63,7 @@ final class _RegisterFormState extends State<RegisterForm> {
           RoundedButton(
             text: 'Nevermind',
             onPressed: () {
-              Navigator.push(context, HomeLayout.route());
+              Navigator.of(context).pop();
             },
           ),
           const SizedBox(height: 16.0),

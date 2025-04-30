@@ -6,8 +6,6 @@ import 'package:weather_app/modules/weather/presentation/pages/search_page.dart'
 import 'package:weather_app/modules/weather/presentation/pages/weather_page.dart';
 
 final class HomeLayout extends StatefulWidget {
-  static route() => MaterialPageRoute(builder: (context) => const HomeLayout());
-
   const HomeLayout({super.key});
 
   @override
@@ -65,7 +63,7 @@ final class _HomeLayoutState extends State<HomeLayout> {
           },
         ),
       ),
-      body: _pages[_currentPageIndex],
+      body: IndexedStack(index: _currentPageIndex, children: _pages),
     );
   }
 }
