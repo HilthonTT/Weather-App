@@ -11,25 +11,27 @@ final class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.black,
-      child: GradientContainer(
-        children: [
-          const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              TopImage(title: "Login", image: "assets/icons/01d.png"),
-              Row(
-                children: [
-                  Spacer(),
-                  Expanded(flex: 50, child: LoginForm()),
-                  Spacer(),
-                ],
-              ),
-            ],
-          ),
-        ],
+    return Scaffold(
+      body: Material(
+        color: AppColors.black,
+        child: GradientContainer(
+          children: [
+            const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                TopImage(title: "Login", image: "assets/icons/01d.png"),
+                Row(
+                  children: [
+                    Spacer(),
+                    Expanded(flex: 50, child: LoginForm()),
+                    Spacer(),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

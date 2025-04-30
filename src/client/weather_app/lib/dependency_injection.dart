@@ -10,6 +10,7 @@ import 'package:weather_app/modules/users/domain/repositories/user_repository.da
 import 'package:weather_app/modules/users/domain/usecases/get_current_user.dart';
 import 'package:weather_app/modules/users/domain/usecases/login_user.dart';
 import 'package:weather_app/modules/users/domain/usecases/register_user.dart';
+import 'package:weather_app/modules/users/presentation/bloc/user_bloc.dart';
 import 'package:weather_app/modules/weather/data/datasources/location_local_data_source.dart';
 import 'package:weather_app/modules/weather/data/datasources/weather_remote_datasource.dart';
 import 'package:weather_app/modules/weather/data/repositories/weather_repository_impl.dart';
@@ -77,5 +78,12 @@ void _initUser() {
     )
     ..registerFactory(() => GetCurrentUser(userRepository: serviceLocator()))
     ..registerFactory(() => LoginUser(userRepository: serviceLocator()))
-    ..registerFactory(() => RegisterUser(userRepository: serviceLocator()));
+    ..registerFactory(() => RegisterUser(userRepository: serviceLocator()))
+    ..registerLazySingleton(
+      () => UserBloc(
+        loginUser: serviceLocator(),
+        registerUser: serviceLocator(),
+        getCurrentUser: serviceLocator(),
+      ),
+    );
 }

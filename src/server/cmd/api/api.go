@@ -117,10 +117,6 @@ func (app *application) mount() http.Handler {
 		r.Use(app.RateLimiterMiddleware)
 	}
 
-	r.Use(app.statusCodePagesMiddleware)
-
-	r.NotFound(app.notFoundHandler)
-
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", app.healthCheckHandler)
 		r.With(app.BasicAuthMiddleware()).Get("/debug/vars", expvar.Handler().ServeHTTP)

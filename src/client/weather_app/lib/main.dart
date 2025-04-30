@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weather_app/common/layouts/home_layout.dart';
 import 'package:weather_app/dependency_injection.dart';
+import 'package:weather_app/modules/users/presentation/bloc/user_bloc.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await initDependencies();
 
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(
+    ProviderScope(
+      child: MultiBlocProvider(
+        providers: [BlocProvider(create: (_) => serviceLocator<UserBloc>())],
+        child: const MyApp(),
+      ),
+    ),
+  );
 }
 
 final class MyApp extends StatelessWidget {

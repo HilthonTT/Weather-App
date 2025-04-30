@@ -17,6 +17,14 @@ final class SettingsPage extends ConsumerStatefulWidget {
 
 final class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
+  void initState() {
+    super.initState();
+
+    // ignore: unused_result
+    ref.refresh(getCurrentUserProvider);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final getCurrentUser = ref.watch(getCurrentUserProvider);
 
@@ -50,7 +58,30 @@ final class _SettingsPageState extends ConsumerState<SettingsPage> {
                           const Text("Settings", style: TextStyles.h1),
                         ],
                       ),
+
                       const SizedBox(height: 20),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            "assets/icons/user.png",
+                            width: 70,
+                            height: 70,
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(user.username, style: TextStyles.largeSubtitle),
+                        ],
+                      ),
+
+                      const SizedBox(height: 10),
                       InkWell(
                         borderRadius: BorderRadius.circular(15),
                         onTap: () {},
@@ -83,7 +114,7 @@ final class _SettingsPageState extends ConsumerState<SettingsPage> {
                           children: [
                             Padding(
                               padding: const EdgeInsets.only(
-                                top: 20,
+                                top: 10,
                                 bottom: 8,
                               ),
                               child: const Text(
