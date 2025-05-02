@@ -7,6 +7,8 @@ import 'package:weather_app/modules/weather/presentation/widgets/hourly_forecast
 import 'package:weather_app/modules/weather/presentation/widgets/weekly_forecast.dart';
 
 final class ForecastPage extends StatelessWidget {
+  static const int currentIndex = 2;
+
   const ForecastPage({super.key});
 
   @override

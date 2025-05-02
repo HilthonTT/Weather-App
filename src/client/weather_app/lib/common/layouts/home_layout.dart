@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weather_app/common/constants/app_colors.dart';
-import 'package:weather_app/modules/users/presentation/pages/settings_page.dart';
+import 'package:weather_app/common/providers/current_page_index_provider.dart';
+import 'package:weather_app/modules/settings/presentation/pages/settings_page.dart';
 import 'package:weather_app/modules/weather/presentation/pages/forecast_page.dart';
 import 'package:weather_app/modules/weather/presentation/pages/search_page.dart';
 import 'package:weather_app/modules/weather/presentation/pages/weather_page.dart';
 
-final class HomeLayout extends StatefulWidget {
+final class HomeLayout extends ConsumerStatefulWidget {
   const HomeLayout({super.key});
 
   @override
-  State<HomeLayout> createState() => _HomeLayoutState();
+  ConsumerState<HomeLayout> createState() => _HomeLayoutState();
 }
 
-final class _HomeLayoutState extends State<HomeLayout> {
+final class _HomeLayoutState extends ConsumerState<HomeLayout> {
   final _destinations = const [
     NavigationDestination(
       icon: Icon(Icons.home_outlined, color: Colors.white),
@@ -43,10 +45,10 @@ final class _HomeLayoutState extends State<HomeLayout> {
     SettingsPage(),
   ];
 
-  int _currentPageIndex = 0;
-
   @override
   Widget build(BuildContext context) {
+    final currentPageIndex = ref.watch(currentPageIndexProvider);
+
     return Scaffold(
       backgroundColor: AppColors.black,
       bottomNavigationBar: NavigationBarTheme(
@@ -54,16 +56,14 @@ final class _HomeLayoutState extends State<HomeLayout> {
         child: NavigationBar(
           destinations: _destinations,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-          selectedIndex: _currentPageIndex,
+          selectedIndex: currentPageIndex,
           indicatorColor: Colors.transparent,
           onDestinationSelected: (index) {
-            setState(() {
-              _currentPageIndex = index;
-            });
+            ref.read(currentPageIndexProvider.notifier).state = index;
           },
         ),
       ),
-      body: IndexedStack(index: _currentPageIndex, children: _pages),
+      body: IndexedStack(index: currentPageIndex, children: _pages),
     );
   }
 }

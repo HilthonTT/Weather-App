@@ -8,6 +8,8 @@ import 'package:weather_app/common/widgets/rounded_text_field.dart';
 import 'package:weather_app/modules/weather/presentation/widgets/searched_cities.dart';
 
 final class SearchPage extends StatefulWidget {
+  static const int currentIndex = 1;
+
   const SearchPage({super.key});
 
   @override

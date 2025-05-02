@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weather_app/common/layouts/home_layout.dart';
 import 'package:weather_app/dependency_injection.dart';
-import 'package:weather_app/modules/users/presentation/bloc/user_bloc.dart';
+import 'package:weather_app/modules/settings/presentation/bloc/settings_bloc.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,7 +13,9 @@ Future<void> main() async {
   runApp(
     ProviderScope(
       child: MultiBlocProvider(
-        providers: [BlocProvider(create: (_) => serviceLocator<UserBloc>())],
+        providers: [
+          BlocProvider(create: (_) => serviceLocator<SettingsBloc>()),
+        ],
         child: const MyApp(),
       ),
     ),

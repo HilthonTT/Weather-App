@@ -1,16 +1,12 @@
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:weather_app/modules/users/data/datasources/settings_remote_datasource.dart';
-import 'package:weather_app/modules/users/data/datasources/user_remote_datasource.dart';
-import 'package:weather_app/modules/users/data/repositories/settings_repository_impl.dart';
-import 'package:weather_app/modules/users/data/repositories/user_repository_impl.dart';
-import 'package:weather_app/modules/users/domain/repositories/settings_repository.dart';
-import 'package:weather_app/modules/users/domain/repositories/user_repository.dart';
-import 'package:weather_app/modules/users/domain/usecases/get_current_user.dart';
-import 'package:weather_app/modules/users/domain/usecases/login_user.dart';
-import 'package:weather_app/modules/users/domain/usecases/register_user.dart';
-import 'package:weather_app/modules/users/presentation/bloc/user_bloc.dart';
+import 'package:weather_app/modules/settings/data/datasources/settings_remote_datasource.dart';
+import 'package:weather_app/modules/settings/data/repositories/settings_repository_impl.dart';
+import 'package:weather_app/modules/settings/domain/repositories/settings_repository.dart';
+import 'package:weather_app/modules/settings/domain/usecases/get_settings.dart';
+import 'package:weather_app/modules/settings/domain/usecases/update_settings.dart';
+import 'package:weather_app/modules/settings/presentation/bloc/settings_bloc.dart';
 import 'package:weather_app/modules/weather/data/datasources/location_local_data_source.dart';
 import 'package:weather_app/modules/weather/data/datasources/weather_remote_datasource.dart';
 import 'package:weather_app/modules/weather/data/repositories/weather_repository_impl.dart';
@@ -27,7 +23,7 @@ Future<void> initDependencies() async {
   await _initServices();
 
   _initWeather();
-  _initUser();
+  _initSettings();
 }
 
 Future<void> _initServices() async {
@@ -62,28 +58,19 @@ void _initWeather() {
     ..registerFactory(() => GetOpenMeteo(weatherRepository: serviceLocator()));
 }
 
-void _initUser() {
+void _initSettings() {
   serviceLocator
-    ..registerFactory<UserRemoteDatasource>(
-      () => UserRemoteDatasourceImpl(box: serviceLocator()),
-    )
     ..registerFactory<SettingsRemoteDatasource>(
       () => SettingsRemoteDatasourceImpl(box: serviceLocator()),
-    )
-    ..registerFactory<UserRepository>(
-      () => UserRepositoryImpl(userRemoteDatasource: serviceLocator()),
     )
     ..registerFactory<SettingsRepository>(
       () => SettingsRepositoryImpl(settingsRemoteDatasource: serviceLocator()),
     )
-    ..registerFactory(() => GetCurrentUser(userRepository: serviceLocator()))
-    ..registerFactory(() => LoginUser(userRepository: serviceLocator()))
-    ..registerFactory(() => RegisterUser(userRepository: serviceLocator()))
+    ..registerFactory(() => GetSettings(settingsRepository: serviceLocator()))
+    ..registerFactory(
+      () => UpdateSettings(settingsRepository: serviceLocator()),
+    )
     ..registerLazySingleton(
-      () => UserBloc(
-        loginUser: serviceLocator(),
-        registerUser: serviceLocator(),
-        getCurrentUser: serviceLocator(),
-      ),
+      () => SettingsBloc(updatedSettings: serviceLocator()),
     );
 }

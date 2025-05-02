@@ -10,6 +10,8 @@ import 'package:weather_app/modules/weather/presentation/widgets/hourly_forecast
 import 'package:weather_app/modules/weather/presentation/widgets/weather_info.dart';
 
 final class WeatherPage extends ConsumerWidget {
+  static const int currentIndex = 0;
+
   const WeatherPage({super.key});
 
   @override
@@ -82,7 +84,9 @@ final class WeatherPage extends ConsumerWidget {
       },
       error: (error, stackTrace) {
         return const GradientContainer(
-          children: [Center(child: Text('An error has occurred'))],
+          children: [
+            Center(child: Text('An error has occurred', style: TextStyles.h1)),
+          ],
         );
       },
       loading: () {
