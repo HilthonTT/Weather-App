@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weather_app/common/constants/app_colors.dart';
 import 'package:weather_app/common/constants/text_styles.dart';
 import 'package:weather_app/common/utils/show_snackbar.dart';
-import 'package:weather_app/common/widgets/custom_back_button.dart';
 import 'package:weather_app/common/widgets/gradient_container.dart';
 import 'package:weather_app/modules/settings/domain/entities/settings.dart';
+import 'package:weather_app/modules/settings/domain/utils/format.dart';
 import 'package:weather_app/modules/settings/presentation/bloc/settings_bloc.dart';
 import 'package:weather_app/modules/settings/presentation/providers/get_settings_provider.dart';
 import 'package:weather_app/modules/settings/presentation/widgets/icon_item_row.dart';
@@ -126,7 +126,9 @@ final class _SettingsPageState extends ConsumerState<SettingsPage> {
                                         title: "Time Format",
                                         icon: "assets/icons/time.png",
                                         options: ["12h", "24h"],
-                                        selectedValue: "24h",
+                                        selectedValue: formatTimeFormat(
+                                          settings.timeFormat,
+                                        ),
                                         onChanged: (val) {
                                           final timeFormat =
                                               val == "12h"
@@ -143,7 +145,9 @@ final class _SettingsPageState extends ConsumerState<SettingsPage> {
                                         title: "Speed Format",
                                         icon: "assets/icons/speed.png",
                                         options: ["Km/h", "Mi/h"],
-                                        selectedValue: "Km/h",
+                                        selectedValue: formatSpeedFormat(
+                                          settings.speedFormat,
+                                        ),
                                         onChanged: (val) {
                                           final speedFormat =
                                               val == "Km/h"
@@ -162,7 +166,9 @@ final class _SettingsPageState extends ConsumerState<SettingsPage> {
                                         title: "Temperature Format",
                                         icon: "assets/icons/temp.png",
                                         options: ["Celsius", "Fahrenheit"],
-                                        selectedValue: "Celsius",
+                                        selectedValue: formatTempFormat(
+                                          settings.tempFormat,
+                                        ),
                                         onChanged: (val) {
                                           final tempFormat =
                                               val == "Celsius"
@@ -186,7 +192,6 @@ final class _SettingsPageState extends ConsumerState<SettingsPage> {
                       ),
                     ],
                   ),
-                  const CustomBackButton(),
                 ],
               ),
             );

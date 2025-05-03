@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:weather_app/common/constants/app_colors.dart';
 import 'package:weather_app/common/constants/text_styles.dart';
 import 'package:weather_app/common/extensions/datetime.dart';
@@ -7,10 +10,11 @@ import 'package:weather_app/common/extensions/string.dart';
 import 'package:weather_app/common/utils/get_weather_icon.dart';
 import 'package:weather_app/common/widgets/custom_back_button.dart';
 import 'package:weather_app/common/widgets/gradient_container.dart';
+import 'package:weather_app/dependency_injection.dart';
 import 'package:weather_app/modules/weather/presentation/providers/get_weather_by_city.dart';
 import 'package:weather_app/modules/weather/presentation/widgets/weather_info.dart';
 
-final class DetailPage extends ConsumerWidget {
+final class DetailPage extends ConsumerStatefulWidget {
   static route(String city) =>
       MaterialPageRoute(builder: (context) => DetailPage(city: city));
 
@@ -19,8 +23,36 @@ final class DetailPage extends ConsumerWidget {
   const DetailPage({super.key, required this.city});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final weatherData = ref.watch(getWeatherByCityProvider(city));
+  ConsumerState<ConsumerStatefulWidget> createState() => _DetailPageState();
+}
+
+final class _DetailPageState extends ConsumerState<DetailPage> {
+  late final StreamSubscription<InternetStatus> _subscription;
+  late final AppLifecycleListener _listener;
+
+  @override
+  void initState() {
+    super.initState();
+    _subscription = serviceLocator<InternetConnection>().onStatusChange.listen(
+      (status) {},
+    );
+    _listener = AppLifecycleListener(
+      onResume: _subscription.resume,
+      onHide: _subscription.pause,
+      onPause: _subscription.pause,
+    );
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    _listener.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final weatherData = ref.watch(getWeatherByCityProvider(widget.city));
 
     return weatherData.when(
       data: (weather) {

@@ -1,7 +1,9 @@
 import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:weather_app/modules/settings/data/datasources/settings_remote_datasource.dart';
+import 'package:weather_app/common/network/connection_checker.dart';
+import 'package:weather_app/modules/settings/data/datasources/settings_local_datasource.dart';
 import 'package:weather_app/modules/settings/data/repositories/settings_repository_impl.dart';
 import 'package:weather_app/modules/settings/domain/repositories/settings_repository.dart';
 import 'package:weather_app/modules/settings/domain/usecases/get_settings.dart';
@@ -32,6 +34,12 @@ Future<void> _initServices() async {
   Hive.defaultDirectory = appDocumentsDirectory.path;
 
   serviceLocator.registerLazySingleton(() => Hive.box(name: "weathers"));
+
+  serviceLocator.registerFactory(() => InternetConnection());
+
+  serviceLocator.registerFactory<ConnectionChecker>(
+    () => ConnectionCheckerImpl(internetConnection: serviceLocator()),
+  );
 }
 
 void _initWeather() {
@@ -45,7 +53,10 @@ void _initWeather() {
       ),
     )
     ..registerFactory<WeatherRepository>(
-      () => WeatherRepositoryImpl(weatherRemoteDatasource: serviceLocator()),
+      () => WeatherRepositoryImpl(
+        weatherRemoteDatasource: serviceLocator(),
+        connectionChecker: serviceLocator(),
+      ),
     )
     ..registerFactory(() => GetForecast(weatherRepository: serviceLocator()))
     ..registerFactory(() => GetWeather(weatherRepository: serviceLocator()))
@@ -60,8 +71,8 @@ void _initWeather() {
 
 void _initSettings() {
   serviceLocator
-    ..registerFactory<SettingsRemoteDatasource>(
-      () => SettingsRemoteDatasourceImpl(box: serviceLocator()),
+    ..registerFactory<SettingsLocalDatasource>(
+      () => SettingsLocalDatasourceImpl(box: serviceLocator()),
     )
     ..registerFactory<SettingsRepository>(
       () => SettingsRepositoryImpl(settingsRemoteDatasource: serviceLocator()),

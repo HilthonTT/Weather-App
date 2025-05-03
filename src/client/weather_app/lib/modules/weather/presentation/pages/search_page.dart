@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:weather_app/common/constants/app_colors.dart';
 import 'package:weather_app/common/constants/text_styles.dart';
 import 'package:weather_app/common/icons/location_icon.dart';
 import 'package:weather_app/common/models/city.dart';
 import 'package:weather_app/common/widgets/gradient_container.dart';
 import 'package:weather_app/common/widgets/rounded_text_field.dart';
+import 'package:weather_app/dependency_injection.dart';
 import 'package:weather_app/modules/weather/presentation/widgets/searched_cities.dart';
 
 final class SearchPage extends StatefulWidget {
@@ -17,6 +21,9 @@ final class SearchPage extends StatefulWidget {
 }
 
 final class _SearchPageState extends State<SearchPage> {
+  late final StreamSubscription<InternetStatus> _subscription;
+  late final AppLifecycleListener _listener;
+
   final _controller = TextEditingController();
 
   final _cities = [
@@ -45,9 +52,26 @@ final class _SearchPageState extends State<SearchPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    _subscription = serviceLocator<InternetConnection>().onStatusChange.listen(
+      (status) {},
+    );
+
+    _listener = AppLifecycleListener(
+      onResume: _subscription.resume,
+      onHide: _subscription.pause,
+      onPause: _subscription.pause,
+    );
+  }
+
+  @override
   void dispose() {
-    super.dispose();
+    _subscription.cancel();
+    _listener.dispose();
     _controller.dispose();
+    super.dispose();
   }
 
   @override

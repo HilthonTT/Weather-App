@@ -1,21 +1,53 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:weather_app/common/constants/app_colors.dart';
 import 'package:weather_app/common/constants/text_styles.dart';
 import 'package:weather_app/common/extensions/datetime.dart';
 import 'package:weather_app/common/extensions/string.dart';
 import 'package:weather_app/common/widgets/gradient_container.dart';
+import 'package:weather_app/dependency_injection.dart';
 import 'package:weather_app/modules/weather/presentation/providers/get_weather_provider.dart';
 import 'package:weather_app/modules/weather/presentation/widgets/hourly_forecast.dart';
 import 'package:weather_app/modules/weather/presentation/widgets/weather_info.dart';
 
-final class WeatherPage extends ConsumerWidget {
-  static const int currentIndex = 0;
-
+final class WeatherPage extends ConsumerStatefulWidget {
   const WeatherPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ConsumerStatefulWidget> createState() => _WeatherPageState();
+}
+
+final class _WeatherPageState extends ConsumerState<WeatherPage> {
+  late final StreamSubscription<InternetStatus> _subscription;
+  late final AppLifecycleListener _listener;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _subscription = serviceLocator<InternetConnection>().onStatusChange.listen(
+      (status) {},
+    );
+
+    _listener = AppLifecycleListener(
+      onResume: _subscription.resume,
+      onHide: _subscription.pause,
+      onPause: _subscription.pause,
+    );
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    _listener.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final openWeather = ref.watch(getWeatherProvider);
 
     final today = DateTime.now().formattedDate;
