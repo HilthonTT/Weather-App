@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weather_app/common/constants/app_colors.dart';
 import 'package:weather_app/common/constants/text_styles.dart';
+import 'package:weather_app/common/extensions/double.dart';
 import 'package:weather_app/common/extensions/int.dart';
 import 'package:weather_app/common/utils/get_weather_icon.dart';
+import 'package:weather_app/modules/settings/domain/entities/settings.dart';
 import 'package:weather_app/modules/weather/domain/entities/forecast.dart';
 import 'package:weather_app/modules/weather/presentation/providers/get_forecast_provider.dart';
 
 final class HourlyForecast extends ConsumerWidget {
-  const HourlyForecast({super.key});
+  final Settings? settings;
+
+  const HourlyForecast({super.key, this.settings});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,6 +32,7 @@ final class HourlyForecast extends ConsumerWidget {
               return HourlyForecastTile(
                 forecast: forecast,
                 isActive: index == 0,
+                settings: settings,
               );
             },
           ),
@@ -46,15 +51,22 @@ final class HourlyForecast extends ConsumerWidget {
 final class HourlyForecastTile extends StatelessWidget {
   final ForecastItem forecast;
   final bool isActive;
+  final Settings? settings;
 
   const HourlyForecastTile({
     super.key,
     required this.forecast,
     required this.isActive,
+    this.settings,
   });
 
   @override
   Widget build(BuildContext context) {
+    final temperature = switch (settings?.tempFormat) {
+      TempFormat.fahrenheit => '${forecast.main.temp.asFahrenheit}°F',
+      _ => '${forecast.main.temp.asCelsius}°C',
+    };
+
     return Padding(
       padding: const EdgeInsets.only(right: 16, top: 12, bottom: 12),
       child: Material(
@@ -80,7 +92,7 @@ final class HourlyForecastTile extends StatelessWidget {
                     style: const TextStyle(color: AppColors.white),
                   ),
                   const SizedBox(height: 5),
-                  Text('${forecast.main.temp.round()}°', style: TextStyles.h3),
+                  Text(temperature, style: TextStyles.h3),
                 ],
               ),
             ],

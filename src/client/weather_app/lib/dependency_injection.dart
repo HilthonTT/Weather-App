@@ -1,23 +1,4 @@
-import 'package:get_it/get_it.dart';
-import 'package:hive/hive.dart';
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:weather_app/common/network/connection_checker.dart';
-import 'package:weather_app/modules/settings/data/datasources/settings_local_datasource.dart';
-import 'package:weather_app/modules/settings/data/repositories/settings_repository_impl.dart';
-import 'package:weather_app/modules/settings/domain/repositories/settings_repository.dart';
-import 'package:weather_app/modules/settings/domain/usecases/get_settings.dart';
-import 'package:weather_app/modules/settings/domain/usecases/update_settings.dart';
-import 'package:weather_app/modules/settings/presentation/bloc/settings_bloc.dart';
-import 'package:weather_app/modules/weather/data/datasources/location_local_data_source.dart';
-import 'package:weather_app/modules/weather/data/datasources/weather_remote_datasource.dart';
-import 'package:weather_app/modules/weather/data/repositories/weather_repository_impl.dart';
-import 'package:weather_app/modules/weather/domain/repositories/weather_repository.dart';
-import 'package:weather_app/modules/weather/domain/usecases/get_forecast.dart';
-import 'package:weather_app/modules/weather/domain/usecases/get_forecast_by_city.dart';
-import 'package:weather_app/modules/weather/domain/usecases/get_open_meteo.dart';
-import 'package:weather_app/modules/weather/domain/usecases/get_weather.dart';
-import 'package:weather_app/modules/weather/domain/usecases/get_weather_by_city.dart';
+part of "dependency_injection.main.dart";
 
 final serviceLocator = GetIt.instance;
 
@@ -82,6 +63,9 @@ void _initSettings() {
       () => UpdateSettings(settingsRepository: serviceLocator()),
     )
     ..registerLazySingleton(
-      () => SettingsBloc(updatedSettings: serviceLocator()),
+      () => SettingsBloc(
+        updatedSettings: serviceLocator(),
+        getSettings: serviceLocator(),
+      ),
     );
 }

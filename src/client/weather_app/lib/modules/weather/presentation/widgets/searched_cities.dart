@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weather_app/common/constants/app_colors.dart';
 import 'package:weather_app/common/constants/text_styles.dart';
+import 'package:weather_app/common/extensions/double.dart';
 import 'package:weather_app/common/extensions/string.dart';
 import 'package:weather_app/common/models/city.dart';
 import 'package:weather_app/common/utils/get_weather_icon.dart';
+import 'package:weather_app/modules/settings/domain/entities/settings.dart';
 import 'package:weather_app/modules/weather/presentation/pages/detail_page.dart';
 import 'package:weather_app/modules/weather/presentation/providers/get_weather_by_city.dart';
 
 final class SearchedCities extends StatelessWidget {
   final List<City> cities;
+  final Settings? settings;
 
-  const SearchedCities({super.key, required this.cities});
+  const SearchedCities({super.key, required this.cities, this.settings});
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +34,7 @@ final class SearchedCities extends StatelessWidget {
           onTap: () {
             Navigator.of(context).push(DetailPage.route(city.name));
           },
-          child: CityTile(index: index, city: city.name),
+          child: CityTile(index: index, city: city.name, settings: settings),
         );
       },
     );
@@ -41,8 +44,14 @@ final class SearchedCities extends StatelessWidget {
 final class CityTile extends ConsumerWidget {
   final String city;
   final int index;
+  final Settings? settings;
 
-  const CityTile({super.key, required this.index, required this.city});
+  const CityTile({
+    super.key,
+    required this.index,
+    required this.city,
+    this.settings,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -67,7 +76,7 @@ final class CityTile extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${weather.main.temp.round()} °',
+                            _formatTemperature(weather.main.temp, settings),
                             style: TextStyles.h2,
                           ),
                           const SizedBox(height: 10),
@@ -108,5 +117,14 @@ final class CityTile extends ConsumerWidget {
         return const Center(child: CircularProgressIndicator());
       },
     );
+  }
+
+  String _formatTemperature(double temp, Settings? settings) {
+    final temperature = switch (settings?.tempFormat) {
+      TempFormat.fahrenheit => '${temp.asFahrenheit}°F',
+      _ => '${temp.asCelsius}°C',
+    };
+
+    return temperature;
   }
 }

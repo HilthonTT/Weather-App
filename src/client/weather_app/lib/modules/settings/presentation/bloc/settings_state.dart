@@ -22,3 +22,9 @@ final class SettingsFailure extends SettingsState {
 final class SettingsUpdateSuccess extends SettingsState {
   const SettingsUpdateSuccess();
 }
+
+final class SettingsDisplaySuccess extends SettingsState {
+  final Settings settings;
+
+  const SettingsDisplaySuccess(this.settings);
+}

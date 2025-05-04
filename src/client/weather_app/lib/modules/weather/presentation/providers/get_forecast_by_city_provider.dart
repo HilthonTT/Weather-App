@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:weather_app/dependency_injection.dart';
+import 'package:weather_app/dependency_injection.main.dart';
 import 'package:weather_app/modules/weather/domain/entities/forecast.dart';
 import 'package:weather_app/modules/weather/domain/usecases/get_forecast_by_city.dart';
 

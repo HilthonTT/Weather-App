@@ -11,3 +11,8 @@ final class UpdateSettingsEvent extends SettingsEvent {
 
   const UpdateSettingsEvent(this.settings);
 }
+
+@immutable
+final class GetSettingsEvent extends SettingsEvent {
+  const GetSettingsEvent();
+}
