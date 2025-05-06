@@ -4,6 +4,12 @@ A mobile weather application built with **Flutter** for the frontend and **Go** 
 
 ---
 
+![Screenshot 2025-05-06 174428](https://github.com/user-attachments/assets/b7a40efc-308f-4238-8867-6fbf620e143d)
+
+![Screenshot 2025-05-06 174436](https://github.com/user-attachments/assets/c5b1dddd-7149-428c-8c3d-f40f1110ad84)
+
+---
+
 ## 🚀 Features
 
 - Real-time weather data using OpenWeather API
