@@ -40,6 +40,12 @@ A mobile weather application built with **Flutter** for the frontend and **Go** 
 
 ---
 
+## Credits
+
+- CodeHQ (UI Design): https://www.youtube.com/watch?v=msoKuk-5QFg
+
+---
+
 ## ⚙️ Backend Setup
 
 1. **Add a `.env` file to `/src/server/` directory:**
