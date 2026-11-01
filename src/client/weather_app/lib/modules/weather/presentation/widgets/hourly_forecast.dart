@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weather_app/common/constants/app_colors.dart';
 import 'package:weather_app/common/constants/text_styles.dart';
-import 'package:weather_app/common/extensions/double.dart';
 import 'package:weather_app/common/extensions/int.dart';
 import 'package:weather_app/common/utils/get_weather_icon.dart';
 import 'package:weather_app/modules/settings/domain/entities/settings.dart';
 import 'package:weather_app/modules/weather/domain/entities/forecast.dart';
 import 'package:weather_app/modules/weather/presentation/providers/get_forecast_provider.dart';
+import 'package:weather_app/modules/settings/presentation/utils/format.dart';
 
+/// Horizontal list of the 3-hourly forecast for the current location.
 final class HourlyForecast extends ConsumerWidget {
   final Settings? settings;
 
@@ -23,7 +24,7 @@ final class HourlyForecast extends ConsumerWidget {
         return SizedBox(
           height: 100,
           child: ListView.builder(
-            itemCount: response.cnt,
+            itemCount: response.list.length,
             scrollDirection: Axis.horizontal,
             shrinkWrap: true,
             itemBuilder: (context, index) {
@@ -62,10 +63,7 @@ final class HourlyForecastTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final temperature = switch (settings?.tempFormat) {
-      TempFormat.fahrenheit => '${forecast.main.temp.asFahrenheit}°F',
-      _ => '${forecast.main.temp.asCelsius}°C',
-    };
+    final temperature = formatTemperature(forecast.main.temp, settings);
 
     return Padding(
       padding: const EdgeInsets.only(right: 16, top: 12, bottom: 12),

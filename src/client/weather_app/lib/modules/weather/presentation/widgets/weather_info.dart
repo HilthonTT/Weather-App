@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:weather_app/common/constants/text_styles.dart';
-import 'package:weather_app/common/extensions/double.dart';
 import 'package:weather_app/modules/settings/domain/entities/settings.dart';
 import 'package:weather_app/modules/weather/domain/entities/weather.dart';
+import 'package:weather_app/modules/settings/presentation/utils/format.dart';
 
+/// Temperature, wind speed and humidity row.
 final class WeatherInfo extends StatelessWidget {
   final WeatherResponse weather;
   final Settings? settings;
@@ -12,15 +13,8 @@ final class WeatherInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final windSpeed = switch (settings?.speedFormat) {
-      SpeedFormat.mph => '${weather.wind.speed.asMilesPerHour} mph',
-      _ => '${weather.wind.speed.asKmPerHour} km/h',
-    };
-
-    final temperature = switch (settings?.tempFormat) {
-      TempFormat.fahrenheit => '${weather.main.temp.asFahrenheit}°F',
-      _ => '${weather.main.temp.asCelsius}°C',
-    };
+    final windSpeed = formatWindSpeed(weather.wind.speed, settings);
+    final temperature = formatTemperature(weather.main.temp, settings);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 30),

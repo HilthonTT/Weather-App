@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:weather_app/common/layouts/home_layout.dart';
-import 'package:weather_app/dependency_injection.main.dart';
+import 'package:weather_app/app/app.dart';
+import 'package:weather_app/common/di/service_locator.dart';
 import 'package:weather_app/modules/settings/presentation/bloc/settings_bloc.dart';
 
 Future<void> main() async {
@@ -14,26 +14,17 @@ Future<void> main() async {
     ProviderScope(
       child: MultiBlocProvider(
         providers: [
-          BlocProvider(create: (_) => serviceLocator<SettingsBloc>()),
+          // Load the user's settings once at startup; every page reads them
+          // from this bloc.
+          BlocProvider(
+            create:
+                (_) =>
+                    serviceLocator<SettingsBloc>()
+                      ..add(const GetSettingsEvent()),
+          ),
         ],
-        child: const MyApp(),
+        child: const WeatherApp(),
       ),
     ),
   );
-}
-
-final class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Weather App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const HomeLayout(),
-    );
-  }
 }

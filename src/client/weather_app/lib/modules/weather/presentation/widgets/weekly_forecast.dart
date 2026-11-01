@@ -3,12 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weather_app/common/constants/app_colors.dart';
 import 'package:weather_app/common/constants/text_styles.dart';
 import 'package:weather_app/common/extensions/datetime.dart';
-import 'package:weather_app/common/extensions/double.dart';
 import 'package:weather_app/common/utils/get_weather_icon.dart';
 import 'package:weather_app/common/widgets/superscript_text.dart';
 import 'package:weather_app/modules/settings/domain/entities/settings.dart';
 import 'package:weather_app/modules/weather/presentation/providers/get_open_meteo_provider.dart';
+import 'package:weather_app/modules/settings/presentation/utils/format.dart';
 
+/// Daily (Open-Meteo) forecast list for the current location.
 final class WeeklyForecast extends ConsumerWidget {
   final Settings? settings;
 
@@ -69,10 +70,7 @@ final class WeeklyForecastTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final temperature = switch (settings?.tempFormat) {
-      TempFormat.fahrenheit => temp.asFahrenheit,
-      _ => temp.asCelsius,
-    };
+    final temperature = temperatureValue(temp, settings);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -96,8 +94,7 @@ final class WeeklyForecastTitle extends StatelessWidget {
           SuperscriptText(
             text: temperature,
             color: AppColors.white,
-            superScript:
-                settings?.tempFormat == TempFormat.celsius ? '°C' : '°F',
+            superScript: temperatureUnit(settings),
             superscriptColor: AppColors.white,
           ),
 

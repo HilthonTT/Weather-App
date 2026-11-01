@@ -56,7 +56,7 @@ final class WeatherResponseModel extends WeatherResponse {
       'wind': (wind as WindModel).toJson(),
       'clouds': (clouds as CloudsModel).toJson(),
       'dt': dt,
-      'sys': (sys as ForecastSysModel).toJson(),
+      'sys': (sys as WeatherSysModel).toJson(),
       'timezone': timezone,
       'name': name,
       'cod': cod,

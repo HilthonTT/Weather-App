@@ -7,6 +7,8 @@ import 'package:weather_app/modules/weather/data/models/forecast_model.dart';
 import 'package:weather_app/modules/weather/data/models/open_meteo_model.dart';
 import 'package:weather_app/modules/weather/data/models/weather_model.dart';
 
+/// Talks to the Go backend (`/v1/weather/...`). Location-based calls use the
+/// device position from [LocationLocalDataSource].
 abstract interface class WeatherRemoteDatasource {
   Future<WeatherResponseModel> getWeather();
   Future<WeatherResponseModel> getWeatherByCity(String city);
@@ -76,7 +78,8 @@ final class WeatherRemoteDatasourceImpl implements WeatherRemoteDatasource {
   @override
   Future<ForecastResponseModel> getForecastByCity(String city) async {
     try {
-      final url = '${Constants.apiUrl}/v1/forecast/$city';
+      final url =
+          '${Constants.apiUrl}/v1/weather/forecast/${Uri.encodeComponent(city)}';
 
       final response = await _dio.get(url);
 
@@ -97,7 +100,8 @@ final class WeatherRemoteDatasourceImpl implements WeatherRemoteDatasource {
   @override
   Future<WeatherResponseModel> getWeatherByCity(String city) async {
     try {
-      final url = '${Constants.apiUrl}/v1/weather/$city';
+      final url =
+          '${Constants.apiUrl}/v1/weather/${Uri.encodeComponent(city)}';
 
       final response = await _dio.get(url);
 

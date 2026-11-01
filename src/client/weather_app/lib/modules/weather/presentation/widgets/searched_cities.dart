@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weather_app/common/constants/app_colors.dart';
 import 'package:weather_app/common/constants/text_styles.dart';
-import 'package:weather_app/common/extensions/double.dart';
 import 'package:weather_app/common/extensions/string.dart';
-import 'package:weather_app/common/models/city.dart';
+import 'package:weather_app/modules/weather/presentation/models/saved_city.dart';
 import 'package:weather_app/common/utils/get_weather_icon.dart';
 import 'package:weather_app/modules/settings/domain/entities/settings.dart';
 import 'package:weather_app/modules/weather/presentation/pages/detail_page.dart';
-import 'package:weather_app/modules/weather/presentation/providers/get_weather_by_city.dart';
+import 'package:weather_app/modules/weather/presentation/providers/get_weather_by_city_provider.dart';
+import 'package:weather_app/modules/settings/presentation/utils/format.dart';
 
 final class SearchedCities extends StatelessWidget {
-  final List<City> cities;
+  final List<SavedCity> cities;
   final Settings? settings;
 
   const SearchedCities({super.key, required this.cities, this.settings});
@@ -76,7 +76,7 @@ final class CityTile extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _formatTemperature(weather.main.temp, settings),
+                            formatTemperature(weather.main.temp, settings),
                             style: TextStyles.h2,
                           ),
                           const SizedBox(height: 10),
@@ -117,14 +117,5 @@ final class CityTile extends ConsumerWidget {
         return const Center(child: CircularProgressIndicator());
       },
     );
-  }
-
-  String _formatTemperature(double temp, Settings? settings) {
-    final temperature = switch (settings?.tempFormat) {
-      TempFormat.fahrenheit => '${temp.asFahrenheit}°F',
-      _ => '${temp.asCelsius}°C',
-    };
-
-    return temperature;
   }
 }

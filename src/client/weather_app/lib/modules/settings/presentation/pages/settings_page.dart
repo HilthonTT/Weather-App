@@ -1,54 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weather_app/common/constants/app_colors.dart';
 import 'package:weather_app/common/constants/text_styles.dart';
 import 'package:weather_app/common/utils/show_snackbar.dart';
 import 'package:weather_app/common/widgets/gradient_container.dart';
+import 'package:weather_app/common/widgets/loader.dart';
 import 'package:weather_app/modules/settings/domain/entities/settings.dart';
-import 'package:weather_app/modules/settings/domain/utils/format.dart';
+import 'package:weather_app/modules/settings/presentation/utils/format.dart';
 import 'package:weather_app/modules/settings/presentation/bloc/settings_bloc.dart';
-import 'package:weather_app/modules/settings/presentation/providers/get_settings_provider.dart';
 import 'package:weather_app/modules/settings/presentation/widgets/icon_item_row.dart';
 
-final class SettingsPage extends ConsumerStatefulWidget {
+/// Lets the user pick temperature, time and wind-speed units.
+///
+/// Reads the current settings from [SettingsBloc] (never from a local copy),
+/// so successive changes to different fields are all preserved.
+final class SettingsPage extends StatelessWidget {
   static const int currentIndex = 3;
 
   const SettingsPage({super.key});
 
-  @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _SettingsPageState();
-}
-
-final class _SettingsPageState extends ConsumerState<SettingsPage> {
-  void _onUpdateSettings(Settings settings) {
+  void _onUpdateSettings(BuildContext context, Settings settings) {
     context.read<SettingsBloc>().add(UpdateSettingsEvent(settings));
   }
 
   @override
   Widget build(BuildContext context) {
-    final data = ref.watch(getSettingsProvider);
-
-    return data.when(
-      error: (error, stackTrace) {
-        return const GradientContainer(
-          children: [
-            Center(child: Text('An error has occurred', style: TextStyles.h1)),
-          ],
-        );
-      },
-      loading: () {
-        return const GradientContainer(
-          children: [
-            Align(
-              alignment: Alignment.center,
-              child: CircularProgressIndicator(),
-            ),
-          ],
-        );
-      },
-      data: (settings) {
-        return BlocConsumer<SettingsBloc, SettingsState>(
+    return BlocConsumer<SettingsBloc, SettingsState>(
           listener: (context, state) {
             if (state is SettingsFailure) {
               showSnackbar(context, state.error, icon: Icons.error);
@@ -57,6 +34,24 @@ final class _SettingsPageState extends ConsumerState<SettingsPage> {
             }
           },
           builder: (context, state) {
+            final settings = context.read<SettingsBloc>().currentSettings;
+
+            if (settings == null) {
+              return GradientContainer(
+                children: [
+                  if (state is SettingsFailure)
+                    const Center(
+                      child: Text(
+                        'An error has occurred',
+                        style: TextStyles.h1,
+                      ),
+                    )
+                  else
+                    const Loader(),
+                ],
+              );
+            }
+
             return Scaffold(
               backgroundColor: AppColors.black,
               body: Stack(
@@ -137,7 +132,7 @@ final class _SettingsPageState extends ConsumerState<SettingsPage> {
 
                                           final updatedSettings = settings
                                               .copyWith(timeFormat: timeFormat);
-                                          _onUpdateSettings(updatedSettings);
+                                          _onUpdateSettings(context, updatedSettings);
                                         },
                                       ),
 
@@ -158,7 +153,7 @@ final class _SettingsPageState extends ConsumerState<SettingsPage> {
                                               .copyWith(
                                                 speedFormat: speedFormat,
                                               );
-                                          _onUpdateSettings(updatedSettings);
+                                          _onUpdateSettings(context, updatedSettings);
                                         },
                                       ),
 
@@ -177,7 +172,7 @@ final class _SettingsPageState extends ConsumerState<SettingsPage> {
 
                                           final updatedSettings = settings
                                               .copyWith(tempFormat: tempFormat);
-                                          _onUpdateSettings(updatedSettings);
+                                          _onUpdateSettings(context, updatedSettings);
                                         },
                                       ),
                                     ],
@@ -197,7 +192,5 @@ final class _SettingsPageState extends ConsumerState<SettingsPage> {
             );
           },
         );
-      },
-    );
   }
 }

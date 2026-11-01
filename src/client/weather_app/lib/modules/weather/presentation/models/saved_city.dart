@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 
 @immutable
-final class City {
+final class SavedCity {
   final String name;
   final double lat;
   final double lon;
 
-  const City({required this.name, required this.lat, required this.lon});
+  const SavedCity({required this.name, required this.lat, required this.lon});
 }

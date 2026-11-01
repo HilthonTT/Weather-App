@@ -8,14 +8,14 @@ import 'package:weather_app/modules/settings/domain/repositories/settings_reposi
 
 @immutable
 final class SettingsRepositoryImpl implements SettingsRepository {
-  final SettingsLocalDatasource settingsRemoteDatasource;
+  final SettingsLocalDatasource settingsLocalDatasource;
 
-  const SettingsRepositoryImpl({required this.settingsRemoteDatasource});
+  const SettingsRepositoryImpl({required this.settingsLocalDatasource});
 
   @override
   Either<Failure, Settings> getSettings() {
     try {
-      final settings = settingsRemoteDatasource.getSettings();
+      final settings = settingsLocalDatasource.getSettings();
 
       return right(settings);
     } catch (e) {
@@ -26,7 +26,7 @@ final class SettingsRepositoryImpl implements SettingsRepository {
   @override
   Either<Failure, Settings> updateSettings({required Settings settings}) {
     try {
-      final updatedSettings = settingsRemoteDatasource.updateSettings(
+      final updatedSettings = settingsLocalDatasource.updateSettings(
         settings: SettingsModel(
           id: settings.id,
           userId: settings.userId,

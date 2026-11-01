@@ -5,12 +5,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:weather_app/common/constants/app_colors.dart';
 import 'package:weather_app/common/constants/text_styles.dart';
-import 'package:weather_app/common/icons/location_icon.dart';
-import 'package:weather_app/common/models/city.dart';
+import 'package:weather_app/common/widgets/location_icon.dart';
+import 'package:weather_app/modules/weather/presentation/models/saved_city.dart';
 import 'package:weather_app/common/utils/show_snackbar.dart';
 import 'package:weather_app/common/widgets/gradient_container.dart';
 import 'package:weather_app/common/widgets/rounded_text_field.dart';
-import 'package:weather_app/dependency_injection.main.dart';
+import 'package:weather_app/common/di/service_locator.dart';
 import 'package:weather_app/modules/settings/domain/entities/settings.dart';
 import 'package:weather_app/modules/settings/presentation/bloc/settings_bloc.dart';
 import 'package:weather_app/modules/weather/presentation/widgets/searched_cities.dart';
@@ -31,12 +31,12 @@ final class _SearchPageState extends State<SearchPage> {
   final _controller = TextEditingController();
 
   final _cities = [
-    const City(name: 'Tokyo', lat: 35.6833, lon: 139.7667),
-    const City(name: 'New Delhi', lat: 28.5833, lon: 77.2),
-    const City(name: 'Paris', lat: 48.85, lon: 2.3333),
-    const City(name: 'London', lat: 51.4833, lon: -0.0833),
-    const City(name: 'New York', lat: 40.7167, lon: -74.0167),
-    const City(name: 'Tehran', lat: 35.6833, lon: 51.4167),
+    const SavedCity(name: 'Tokyo', lat: 35.6833, lon: 139.7667),
+    const SavedCity(name: 'New Delhi', lat: 28.5833, lon: 77.2),
+    const SavedCity(name: 'Paris', lat: 48.85, lon: 2.3333),
+    const SavedCity(name: 'London', lat: 51.4833, lon: -0.0833),
+    const SavedCity(name: 'New York', lat: 40.7167, lon: -74.0167),
+    const SavedCity(name: 'Tehran', lat: 35.6833, lon: 51.4167),
   ];
 
   Settings? settings;
@@ -48,7 +48,7 @@ final class _SearchPageState extends State<SearchPage> {
       return;
     }
 
-    final city = City(name: name, lat: 0, lon: 0);
+    final city = SavedCity(name: name, lat: 0, lon: 0);
 
     setState(() {
       _cities.add(city);
@@ -71,7 +71,9 @@ final class _SearchPageState extends State<SearchPage> {
       onPause: _subscription.pause,
     );
 
-    context.read<SettingsBloc>().add(const GetSettingsEvent());
+    // Settings are loaded once at startup (see main.dart); updates arrive
+    // through the BlocConsumer listener below.
+    settings = context.read<SettingsBloc>().currentSettings;
   }
 
   @override

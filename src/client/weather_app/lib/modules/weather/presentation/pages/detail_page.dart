@@ -12,10 +12,10 @@ import 'package:weather_app/common/utils/get_weather_icon.dart';
 import 'package:weather_app/common/utils/show_snackbar.dart';
 import 'package:weather_app/common/widgets/custom_back_button.dart';
 import 'package:weather_app/common/widgets/gradient_container.dart';
-import 'package:weather_app/dependency_injection.main.dart';
+import 'package:weather_app/common/di/service_locator.dart';
 import 'package:weather_app/modules/settings/domain/entities/settings.dart';
 import 'package:weather_app/modules/settings/presentation/bloc/settings_bloc.dart';
-import 'package:weather_app/modules/weather/presentation/providers/get_weather_by_city.dart';
+import 'package:weather_app/modules/weather/presentation/providers/get_weather_by_city_provider.dart';
 import 'package:weather_app/modules/weather/presentation/widgets/weather_info.dart';
 
 final class DetailPage extends ConsumerStatefulWidget {
@@ -48,7 +48,9 @@ final class _DetailPageState extends ConsumerState<DetailPage> {
       onPause: _subscription.pause,
     );
 
-    context.read<SettingsBloc>().add(const GetSettingsEvent());
+    // Settings are loaded once at startup (see main.dart); updates arrive
+    // through the BlocConsumer listener below.
+    settings = context.read<SettingsBloc>().currentSettings;
   }
 
   @override

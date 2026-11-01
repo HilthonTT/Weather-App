@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:weather_app/common/constants/app_colors.dart';
-import 'package:weather_app/common/providers/current_page_index_provider.dart';
-import 'package:weather_app/modules/settings/presentation/bloc/settings_bloc.dart';
+import 'package:weather_app/app/current_page_index_provider.dart';
 import 'package:weather_app/modules/settings/presentation/pages/settings_page.dart';
 import 'package:weather_app/modules/weather/presentation/pages/forecast_page.dart';
 import 'package:weather_app/modules/weather/presentation/pages/search_page.dart';
 import 'package:weather_app/modules/weather/presentation/pages/weather_page.dart';
 
+/// Bottom-navigation shell hosting the four main pages. Pages are kept alive
+/// in an [IndexedStack] so switching tabs does not refetch data.
 final class HomeLayout extends ConsumerStatefulWidget {
   const HomeLayout({super.key});
 
@@ -50,12 +50,6 @@ final class _HomeLayoutState extends ConsumerState<HomeLayout> {
   @override
   Widget build(BuildContext context) {
     final currentPageIndex = ref.watch(currentPageIndexProvider);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (currentPageIndex == 0) {
-        context.read<SettingsBloc>().add(const GetSettingsEvent());
-      }
-    });
 
     return Scaffold(
       backgroundColor: AppColors.black,

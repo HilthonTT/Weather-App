@@ -31,6 +31,14 @@ final class _IconItemDropdownRowState extends State<IconItemDropdownRow> {
     _currentValue = widget.selectedValue;
   }
 
+  @override
+  void didUpdateWidget(covariant IconItemDropdownRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedValue != widget.selectedValue) {
+      _currentValue = widget.selectedValue;
+    }
+  }
+
   void _onSelect(String? newValue) {
     if (newValue == null) {
       return;
