@@ -8,6 +8,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -16,6 +17,7 @@ var (
 	ErrDuplicateUsername = errors.New("a user with that username already exists")
 )
 
+// User is an account. Password is never serialized to JSON.
 type User struct {
 	ID            int64    `json:"id"`
 	Username      string   `json:"username"`
@@ -52,6 +54,8 @@ type UserStore struct {
 	db *sql.DB
 }
 
+// Create inserts a user inside tx. Duplicate email/username are reported as
+// ErrDuplicateEmail / ErrDuplicateUsername.
 func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 	query := `
 		INSERT INTO users (username, password, email, role_id) VALUES 
@@ -79,29 +83,26 @@ func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 		&user.CreatedAt,
 	)
 	if err != nil {
-		switch {
-		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
-			return ErrDuplicateEmail
-		case err.Error() == `pq: duplicate key value violates unique constraint "users_username_key"`:
-			return ErrDuplicateUsername
-		default:
-			return err
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" { // unique_violation
+			switch pqErr.Constraint {
+			case "users_email_key":
+				return ErrDuplicateEmail
+			case "users_username_key":
+				return ErrDuplicateUsername
+			}
 		}
+
+		return err
 	}
 
 	return nil
 }
 
 func (s *UserStore) GetByID(ctx context.Context, userID int64) (*User, error) {
-	// query := `
-	// 	SELECT users.id, username, email, password, created_at, roles.*
-	// 	FROM users
-	// 	JOIN roles ON (users.role_id = roles.id)
-	// 	WHERE users.id = $1 AND email_verified = true
-	// `
-
 	query := `
-		SELECT users.id, username, email, password, created_at, roles.*
+		SELECT users.id, username, email, password, created_at, email_verified,
+		       roles.id, roles.name, roles.level, COALESCE(roles.description, '')
 		FROM users
 		JOIN roles ON (users.role_id = roles.id)
 		WHERE users.id = $1
@@ -121,6 +122,7 @@ func (s *UserStore) GetByID(ctx context.Context, userID int64) (*User, error) {
 		&user.Email,
 		&user.Password.hash,
 		&user.CreatedAt,
+		&user.EmailVerified,
 		&user.Role.ID,
 		&user.Role.Name,
 		&user.Role.Level,
@@ -135,9 +137,14 @@ func (s *UserStore) GetByID(ctx context.Context, userID int64) (*User, error) {
 		}
 	}
 
+	user.RoleID = user.Role.ID
+
 	return user, nil
 }
 
+// CreateAndSendEmailVerification creates the user and its email
+// verification token in a single transaction. (The email itself is sent by
+// the caller.)
 func (s *UserStore) CreateAndSendEmailVerification(ctx context.Context, user *User, token string, invitationExp time.Duration) error {
 	return withTx(s.db, ctx, func(tx *sql.Tx) error {
 		if err := s.Create(ctx, tx, user); err != nil {
@@ -190,7 +197,7 @@ func (s *UserStore) update(ctx context.Context, tx *sql.Tx, user *User) error {
 }
 
 func (s *UserStore) deleteEmailVerification(ctx context.Context, tx *sql.Tx, userID int64) error {
-	query := `DELETE FROM user_invitations WHERE user_id = $1`
+	query := `DELETE FROM email_verifications WHERE user_id = $1`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
@@ -217,13 +224,14 @@ func (s *UserStore) delete(ctx context.Context, tx *sql.Tx, id int64) error {
 	return nil
 }
 
+// Delete removes a user and any pending email verification.
 func (s *UserStore) Delete(ctx context.Context, userID int64) error {
 	return withTx(s.db, ctx, func(tx *sql.Tx) error {
-		if err := s.delete(ctx, tx, userID); err != nil {
+		if err := s.deleteEmailVerification(ctx, tx, userID); err != nil {
 			return err
 		}
 
-		if err := s.deleteEmailVerification(ctx, tx, userID); err != nil {
+		if err := s.delete(ctx, tx, userID); err != nil {
 			return err
 		}
 
@@ -295,6 +303,8 @@ func (s *UserStore) getUserFromInvitation(ctx context.Context, tx *sql.Tx, token
 	return user, nil
 }
 
+// Verify marks the user owning the (plain-text) token as verified and
+// consumes the token. Returns ErrNotFound for unknown or expired tokens.
 func (s *UserStore) Verify(ctx context.Context, token string) error {
 	return withTx(s.db, ctx, func(tx *sql.Tx) error {
 

@@ -1,4 +1,5 @@
-package logging
+// Package tracing configures the global OpenTelemetry tracer provider.
+package tracing
 
 import (
 	"context"

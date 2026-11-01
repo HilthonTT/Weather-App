@@ -1,3 +1,4 @@
+// Package mailer sends templated transactional emails.
 package mailer
 
 import "embed"

@@ -21,6 +21,7 @@ const (
 	Mph  SpeedFormat = "mph"
 )
 
+// Settings are a user's display preferences.
 type Settings struct {
 	ID          int64       `json:"id"`
 	UserID      int64       `json:"user_id"`
@@ -29,10 +30,27 @@ type Settings struct {
 	SpeedFormat SpeedFormat `json:"speed_format"`
 }
 
+// DefaultSettings returns the settings a user gets until they change them.
+func DefaultSettings(userID int64) *Settings {
+	return &Settings{
+		UserID:      userID,
+		TempFormat:  Celsius,
+		TimeFormat:  TwentyFourHour,
+		SpeedFormat: Kmph,
+	}
+}
+
+// Update applies a partial update: empty values leave the field unchanged.
 func (s *Settings) Update(tempFormat TempFormat, timeFormat TimeFormat, speedFormat SpeedFormat) {
-	s.TempFormat = tempFormat
-	s.TimeFormat = timeFormat
-	s.SpeedFormat = speedFormat
+	if tempFormat != "" {
+		s.TempFormat = tempFormat
+	}
+	if timeFormat != "" {
+		s.TimeFormat = timeFormat
+	}
+	if speedFormat != "" {
+		s.SpeedFormat = speedFormat
+	}
 }
 
 type SettingsStore struct {

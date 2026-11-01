@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -35,14 +36,13 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := app.getUser(r.Context(), userID)
 	if err != nil {
-		switch err {
-		case store.ErrNotFound:
+		if errors.Is(err, store.ErrNotFound) {
 			app.notFoundResponse(w, r, err)
 			return
-		default:
-			app.internalServerError(w, r, err)
-			return
 		}
+
+		app.internalServerError(w, r, err)
+		return
 	}
 
 	if err := app.jsonResponse(w, http.StatusOK, user); err != nil {
@@ -50,7 +50,7 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetUser godoc
+// GetCurrentUser godoc
 //
 //	@Summary		Fetches the current user's profile
 //	@Description	Fetches the current's user profile
@@ -69,6 +69,33 @@ func (app *application) getCurrentUserHandler(w http.ResponseWriter, r *http.Req
 	if err := app.jsonResponse(w, http.StatusOK, currentUser); err != nil {
 		app.internalServerError(w, r, err)
 	}
+}
+
+// ActivateUser godoc
+//
+//	@Summary		Activates/Verifies a user's email
+//	@Description	Activates a user by the token sent in the registration email
+//	@Tags			users
+//	@Produce		json
+//	@Param			token	path		string	true	"Verification token"
+//	@Success		204		{string}	string	"User activated"
+//	@Failure		404		{object}	error
+//	@Failure		500		{object}	error
+//	@Router			/users/activate/{token} [put]
+func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Request) {
+	token := chi.URLParam(r, "token")
+
+	if err := app.store.Users.Verify(r.Context(), token); err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			app.notFoundResponse(w, r, err)
+			return
+		}
+
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func getUserFromContext(r *http.Request) *store.User {

@@ -105,6 +105,10 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {}
                     },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {}
@@ -128,6 +132,43 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
+                    }
+                }
+            }
+        },
+        "/users/activate/{token}": {
+            "put": {
+                "description": "Activates a user by the token sent in the registration email",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Activates/Verifies a user's email",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Verification token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "User activated",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
                     }
                 }
             }
@@ -228,7 +269,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Retrieves the settings for a user by their ID",
+                "description": "Retrieves the settings for a user by their ID. Users may only access their own settings (admins may access any).",
                 "consumes": [
                     "application/json"
                 ],
@@ -259,8 +300,8 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {}
                     },
-                    "404": {
-                        "description": "Not Found",
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {}
                     },
                     "500": {
@@ -275,7 +316,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Partially updates the settings for a user.",
+                "description": "Partially updates the settings for a user. Omitted fields are left unchanged.",
                 "consumes": [
                     "application/json"
                 ],
@@ -315,6 +356,10 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {}
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {}
@@ -328,7 +373,7 @@ const docTemplate = `{
         },
         "/weather/coords/{latitude}/{longitude}": {
             "get": {
-                "description": "Fetches the current weather data for a specified latitude and longitude",
+                "description": "Fetches the current weather data (metric units) for a specified latitude and longitude",
                 "consumes": [
                     "application/json"
                 ],
@@ -379,7 +424,7 @@ const docTemplate = `{
         },
         "/weather/forecast/coords/{latitude}/{longitude}": {
             "get": {
-                "description": "Fetches the weather forecast data for a specified latitude and longitude",
+                "description": "Fetches the 5 day / 3 hour forecast (metric units) for a specified latitude and longitude",
                 "consumes": [
                     "application/json"
                 ],
@@ -430,7 +475,7 @@ const docTemplate = `{
         },
         "/weather/forecast/{city}": {
             "get": {
-                "description": "Fetches the weather forecast data for a specified city",
+                "description": "Fetches the 5 day / 3 hour forecast (metric units) for a specified city",
                 "consumes": [
                     "application/json"
                 ],
@@ -474,7 +519,7 @@ const docTemplate = `{
         },
         "/weather/open-meteo/coords/{latitude}/{longitude}": {
             "get": {
-                "description": "Fetches the open meteo data for a specified latitude and longitude",
+                "description": "Fetches the Open-Meteo daily + hourly forecast for a specified latitude and longitude",
                 "consumes": [
                     "application/json"
                 ],
@@ -525,7 +570,7 @@ const docTemplate = `{
         },
         "/weather/{city}": {
             "get": {
-                "description": "Fetches the current weather data for a specified city",
+                "description": "Fetches the current weather data (metric units) for a specified city",
                 "consumes": [
                     "application/json"
                 ],

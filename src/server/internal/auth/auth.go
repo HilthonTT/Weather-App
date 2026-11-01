@@ -1,3 +1,4 @@
+// Package auth defines token authentication used by the API.
 package auth
 
 import "github.com/golang-jwt/jwt/v5"

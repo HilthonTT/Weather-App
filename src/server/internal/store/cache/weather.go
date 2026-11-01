@@ -4,197 +4,114 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/hilthontt/weather/internal/store"
 )
 
+// WeatherStore caches upstream weather responses in Redis.
 type WeatherStore struct {
 	rdb *redis.Client
 }
 
+// WeatherExpTime is how long weather/forecast responses stay cached.
 const WeatherExpTime = time.Hour
 
+// coordKey builds a cache key from coordinates rounded to 2 decimals
+// (~1 km). Rounding is required for cache hits: the coordinates a client
+// sends (raw GPS) never exactly match the ones OpenWeather echoes back.
+func coordKey(prefix string, lat, lon float64) string {
+	return fmt.Sprintf("%s-%.2f-%.2f", prefix, lat, lon)
+}
+
+// cityKey builds a case-insensitive cache key for a city name, so that
+// "london", " London" and "LONDON" share an entry.
+func cityKey(prefix, city string) string {
+	return fmt.Sprintf("%s-city-%s", prefix, strings.ToLower(strings.TrimSpace(city)))
+}
+
 func (s *WeatherStore) GetWeather(ctx context.Context, lat, lon float64) (*store.WeatherResponse, error) {
-	cacheKey := fmt.Sprintf("weather-%f-%f", lat, lon)
-
-	data, err := s.rdb.Get(ctx, cacheKey).Result()
-	if err == redis.Nil {
-		return nil, nil
-	} else if err != nil {
-		return nil, err
-	}
-
-	var weather store.WeatherResponse
-	if data != "" {
-		err := json.Unmarshal([]byte(data), &weather)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &weather, nil
+	return get[store.WeatherResponse](ctx, s.rdb, coordKey("weather", lat, lon))
 }
 
 func (s *WeatherStore) GetWeatherCity(ctx context.Context, city string) (*store.WeatherResponse, error) {
-	cacheKey := fmt.Sprintf("weather-%s", city)
-
-	data, err := s.rdb.Get(ctx, cacheKey).Result()
-	if err == redis.Nil {
-		return nil, nil
-	} else if err != nil {
-		return nil, err
-	}
-
-	var weather store.WeatherResponse
-	if data != "" {
-		err := json.Unmarshal([]byte(data), &weather)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &weather, nil
+	return get[store.WeatherResponse](ctx, s.rdb, cityKey("weather", city))
 }
 
+// SetWeather caches the response under both its coordinates and city name.
 func (s *WeatherStore) SetWeather(ctx context.Context, weather *store.WeatherResponse) error {
-	cacheKey1 := fmt.Sprintf("weather-%f-%f", weather.Coord.Lat, weather.Coord.Lon)
-	cacheKey2 := fmt.Sprintf("weather-%s", weather.Name)
-
-	json, err := json.Marshal(weather)
-	if err != nil {
-		return err
-	}
-
-	err = s.rdb.SetEX(ctx, cacheKey1, json, WeatherExpTime).Err()
-	if err != nil {
-		return err
-	}
-
-	err = s.rdb.SetEX(ctx, cacheKey2, json, WeatherExpTime).Err()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return set(ctx, s.rdb, weather,
+		coordKey("weather", weather.Coord.Lat, weather.Coord.Lon),
+		cityKey("weather", weather.Name),
+	)
 }
 
 func (s *WeatherStore) DeleteWeather(ctx context.Context, lat, lon float64) error {
-	cacheKey := fmt.Sprintf("weather-%f-%f", lat, lon)
-
-	return s.rdb.Del(ctx, cacheKey).Err()
+	return s.rdb.Del(ctx, coordKey("weather", lat, lon)).Err()
 }
 
 func (s *WeatherStore) GetForecast(ctx context.Context, lat, lon float64) (*store.ForecastResponse, error) {
-	cacheKey := fmt.Sprintf("forecast-%f-%f", lat, lon)
-
-	data, err := s.rdb.Get(ctx, cacheKey).Result()
-	if err == redis.Nil {
-		return nil, nil
-	} else if err != nil {
-		return nil, err
-	}
-
-	var forecast store.ForecastResponse
-	if data != "" {
-		err := json.Unmarshal([]byte(data), &forecast)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &forecast, nil
+	return get[store.ForecastResponse](ctx, s.rdb, coordKey("forecast", lat, lon))
 }
 
 func (s *WeatherStore) GetForecastByCity(ctx context.Context, city string) (*store.ForecastResponse, error) {
-	cacheKey := fmt.Sprintf("forecast-%s", city)
-
-	data, err := s.rdb.Get(ctx, cacheKey).Result()
-	if err == redis.Nil {
-		return nil, nil
-	} else if err != nil {
-		return nil, err
-	}
-
-	var forecast store.ForecastResponse
-	if data != "" {
-		err := json.Unmarshal([]byte(data), &forecast)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &forecast, nil
+	return get[store.ForecastResponse](ctx, s.rdb, cityKey("forecast", city))
 }
 
+// SetForecast caches the response under both its coordinates and city name.
 func (s *WeatherStore) SetForecast(ctx context.Context, forecast *store.ForecastResponse) error {
-	cacheKey1 := fmt.Sprintf("forecast-%f-%f", forecast.City.Coord.Lat, forecast.City.Coord.Lon)
-	cacheKey2 := fmt.Sprintf("forecast-%s", forecast.City.Name)
-
-	json, err := json.Marshal(forecast)
-	if err != nil {
-		return err
-	}
-
-	err = s.rdb.SetEX(ctx, cacheKey1, json, WeatherExpTime).Err()
-	if err != nil {
-		return err
-	}
-
-	err = s.rdb.SetEX(ctx, cacheKey2, json, WeatherExpTime).Err()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return set(ctx, s.rdb, forecast,
+		coordKey("forecast", forecast.City.Coord.Lat, forecast.City.Coord.Lon),
+		cityKey("forecast", forecast.City.Name),
+	)
 }
 
 func (s *WeatherStore) DeleteForecast(ctx context.Context, lat, lon float64) error {
-	cacheKey := fmt.Sprintf("forecast-%f-%f", lat, lon)
-
-	return s.rdb.Del(ctx, cacheKey).Err()
+	return s.rdb.Del(ctx, coordKey("forecast", lat, lon)).Err()
 }
 
 func (s *WeatherStore) GetOpenMeteo(ctx context.Context, lat, lon float64) (*store.OpenMeteoResponse, error) {
-	cacheKey := fmt.Sprintf("open-meteo-%f-%f", lat, lon)
+	return get[store.OpenMeteoResponse](ctx, s.rdb, coordKey("open-meteo", lat, lon))
+}
 
-	data, err := s.rdb.Get(ctx, cacheKey).Result()
+func (s *WeatherStore) SetOpenMeteo(ctx context.Context, openMeteo *store.OpenMeteoResponse, lat, lon float64) error {
+	return set(ctx, s.rdb, openMeteo, coordKey("open-meteo", lat, lon))
+}
+
+func (s *WeatherStore) DeleteOpenMeteo(ctx context.Context, lat, lon float64) error {
+	return s.rdb.Del(ctx, coordKey("open-meteo", lat, lon)).Err()
+}
+
+// get returns (nil, nil) on a cache miss.
+func get[T any](ctx context.Context, rdb *redis.Client, key string) (*T, error) {
+	data, err := rdb.Get(ctx, key).Bytes()
 	if err == redis.Nil {
 		return nil, nil
 	} else if err != nil {
 		return nil, err
 	}
 
-	var openMeteo store.OpenMeteoResponse
-	if data != "" {
-		err := json.Unmarshal([]byte(data), &openMeteo)
-		if err != nil {
-			return nil, err
-		}
+	var value T
+	if err := json.Unmarshal(data, &value); err != nil {
+		return nil, err
 	}
 
-	return &openMeteo, nil
+	return &value, nil
 }
 
-func (s *WeatherStore) SetOpenMeteo(ctx context.Context, openMeteo *store.OpenMeteoResponse, lat, lon float64) error {
-	cacheKey := fmt.Sprintf("open-meteo-%f-%f", lat, lon)
-
-	json, err := json.Marshal(openMeteo)
+func set(ctx context.Context, rdb *redis.Client, value any, keys ...string) error {
+	data, err := json.Marshal(value)
 	if err != nil {
 		return err
 	}
 
-	err = s.rdb.SetEX(ctx, cacheKey, json, WeatherExpTime).Err()
-	if err != nil {
-		return err
+	pipe := rdb.TxPipeline()
+	for _, key := range keys {
+		pipe.SetEX(ctx, key, data, WeatherExpTime)
 	}
 
-	return nil
-}
-
-func (s *WeatherStore) DeleteOpenMeteo(ctx context.Context, lat, lon float64) error {
-	cacheKey := fmt.Sprintf("open-meteo-%f-%f", lat, lon)
-
-	return s.rdb.Del(ctx, cacheKey).Err()
+	_, err = pipe.Exec(ctx)
+	return err
 }

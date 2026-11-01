@@ -3,12 +3,15 @@ package store
 import (
 	"context"
 	"database/sql"
+	"sync"
 	"time"
 )
 
+// NewMockStore returns an in-memory Storage for handler tests.
 func NewMockStore() Storage {
 	return Storage{
-		Users: &MockUserStore{},
+		Users:    &MockUserStore{},
+		Settings: NewMockSettingsStore(),
 	}
 }
 
@@ -35,5 +38,43 @@ func (m *MockUserStore) CreateAndSendEmailVerification(ctx context.Context, user
 }
 
 func (m *MockUserStore) Verify(ctx context.Context, t string) error {
+	return nil
+}
+
+// MockSettingsStore keeps settings in memory, keyed by user ID.
+type MockSettingsStore struct {
+	mu   sync.Mutex
+	data map[int64]Settings
+}
+
+func NewMockSettingsStore() *MockSettingsStore {
+	return &MockSettingsStore{data: map[int64]Settings{}}
+}
+
+func (m *MockSettingsStore) Create(_ context.Context, s *Settings) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	s.ID = int64(len(m.data) + 1)
+	m.data[s.UserID] = *s
+	return nil
+}
+
+func (m *MockSettingsStore) GetByUserID(_ context.Context, userID int64) (*Settings, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	s, ok := m.data[userID]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	return &s, nil
+}
+
+func (m *MockSettingsStore) Update(_ context.Context, s *Settings) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, ok := m.data[s.UserID]; !ok {
+		return ErrNotFound
+	}
+	m.data[s.UserID] = *s
 	return nil
 }

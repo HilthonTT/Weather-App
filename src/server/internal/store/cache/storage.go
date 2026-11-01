@@ -1,3 +1,4 @@
+// Package cache is a Redis-backed read-through cache for users and weather data.
 package cache
 
 import (

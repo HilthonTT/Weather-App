@@ -1,3 +1,5 @@
+// Package store contains the persistence layer: PostgreSQL-backed users,
+// roles and settings, plus the HTTP clients for the upstream weather APIs.
 package store
 
 import (
@@ -14,6 +16,8 @@ var (
 	QueryTimeoutDuration = time.Second * 5
 )
 
+// Storage groups every repository used by the API. Each field is an
+// interface so handlers can be tested with mocks (see mocks.go).
 type Storage struct {
 	Users interface {
 		GetByID(context.Context, int64) (*User, error)
@@ -27,11 +31,11 @@ type Storage struct {
 		GetByName(context.Context, string) (*Role, error)
 	}
 	Weathers interface {
-		GetWeather(string) (*WeatherResponse, error)
-		GetWeatherByCoords(float64, float64) (*WeatherResponse, error)
-		GetForecast(string) (*ForecastResponse, error)
-		GetForecastByCoords(float64, float64) (*ForecastResponse, error)
-		GetOpenMeteoByCoords(float64, float64) (*OpenMeteoResponse, error)
+		GetWeather(context.Context, string) (*WeatherResponse, error)
+		GetWeatherByCoords(context.Context, float64, float64) (*WeatherResponse, error)
+		GetForecast(context.Context, string) (*ForecastResponse, error)
+		GetForecastByCoords(context.Context, float64, float64) (*ForecastResponse, error)
+		GetOpenMeteoByCoords(context.Context, float64, float64) (*OpenMeteoResponse, error)
 	}
 	Settings interface {
 		Create(ctx context.Context, settings *Settings) error
@@ -40,14 +44,15 @@ type Storage struct {
 	}
 }
 
+// NewStorage returns the production Storage implementation.
 func NewStorage(db *sql.DB, openWeatherApiKey string) Storage {
 	return Storage{
 		Users:    &UserStore{db},
 		Roles:    &RoleStore{db},
 		Settings: &SettingsStore{db},
 		Weathers: &WeatherStore{
-			openWeatherApiKey,
-			&http.Client{
+			APIKey: openWeatherApiKey,
+			HTTP: &http.Client{
 				Timeout: 10 * time.Second,
 			},
 		},

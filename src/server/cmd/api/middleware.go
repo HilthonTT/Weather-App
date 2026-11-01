@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"math"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,11 +14,13 @@ import (
 	"github.com/hilthontt/weather/internal/store"
 )
 
+// RateLimiterMiddleware throttles requests per client IP.
 func (app *application) RateLimiterMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if app.config.rateLimiter.Enabled {
-			if allow, retryAfter := app.rateLimiter.Allow(r.RemoteAddr); !allow {
-				app.rateLimitExceededResponse(w, r, retryAfter.String())
+			if allow, retryAfter := app.rateLimiter.Allow(clientIP(r)); !allow {
+				seconds := int(math.Ceil(retryAfter.Seconds()))
+				app.rateLimitExceededResponse(w, r, strconv.Itoa(seconds))
 				return
 			}
 		}
@@ -25,6 +29,21 @@ func (app *application) RateLimiterMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// clientIP returns the caller's IP without the port. Without this, every new
+// TCP connection (new ephemeral port) would get a fresh rate-limit bucket.
+// middleware.RealIP has already replaced RemoteAddr with X-Forwarded-For /
+// X-Real-IP when present.
+func clientIP(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+
+	return host
+}
+
+// BasicAuthMiddleware protects operational endpoints (e.g. /debug/vars)
+// with the AUTH_BASIC_USER / AUTH_BASIC_PASS credentials.
 func (app *application) BasicAuthMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +83,8 @@ func (app *application) BasicAuthMiddleware() func(http.Handler) http.Handler {
 	}
 }
 
+// AuthTokenMiddleware validates the "Authorization: Bearer <jwt>" header and
+// stores the authenticated *store.User in the request context.
 func (app *application) AuthTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
@@ -107,29 +128,30 @@ func (app *application) AuthTokenMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// getUser loads a user, going through the Redis cache when it is enabled.
+// Cache failures are logged and fall back to the database rather than
+// failing the request.
 func (app *application) getUser(ctx context.Context, userID int64) (*store.User, error) {
 	if !app.config.redisCfg.enabled {
-
 		return app.store.Users.GetByID(ctx, userID)
 	}
 
 	user, err := app.cacheStorage.Users.Get(ctx, userID)
 	if err != nil {
+		app.logger.Warnw("error reading user from cache", "userID", userID, "error", err)
+	}
 
+	if user != nil {
+		return user, nil
+	}
+
+	user, err = app.store.Users.GetByID(ctx, userID)
+	if err != nil {
 		return nil, err
 	}
 
-	if user == nil {
-		user, err = app.store.Users.GetByID(ctx, userID)
-		if err != nil {
-
-			return nil, err
-		}
-
-		if err := app.cacheStorage.Users.Set(ctx, user); err != nil {
-
-			return nil, err
-		}
+	if err := app.cacheStorage.Users.Set(ctx, user); err != nil {
+		app.logger.Warnw("error writing user to cache", "userID", userID, "error", err)
 	}
 
 	return user, nil

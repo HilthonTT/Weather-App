@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+// Validate validates request payloads using `validate` struct tags.
 var Validate *validator.Validate
 
 func init() {
@@ -20,7 +21,7 @@ func writeJSON(w http.ResponseWriter, status int, data any) error {
 }
 
 func readJSON(w http.ResponseWriter, r *http.Request, data any) error {
-	maxBytes := 1_048_578 // 1mb
+	maxBytes := 1 << 20 // 1 MiB
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
 
 	decoder := json.NewDecoder(r.Body)

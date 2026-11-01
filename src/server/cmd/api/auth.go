@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -34,6 +35,7 @@ type UserWithToken struct {
 //	@Param			payload	body		RegisterUserPayload	true	"User credentials"
 //	@Success		201		{object}	UserWithToken		"User registered"
 //	@Failure		400		{object}	error
+//	@Failure		409		{object}	error
 //	@Failure		500		{object}	error
 //	@Router			/authentication/register [post]
 func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -72,14 +74,12 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 
 	err := app.store.Users.CreateAndSendEmailVerification(ctx, user, hashToken, app.config.mail.exp)
 	if err != nil {
-		switch err {
-		case store.ErrDuplicateEmail:
-			app.badRequestResponse(w, r, err)
-		case store.ErrDuplicateUsername:
-			app.badRequestResponse(w, r, err)
-		default:
-			app.internalServerError(w, r, err)
+		if errors.Is(err, store.ErrDuplicateEmail) || errors.Is(err, store.ErrDuplicateUsername) {
+			app.conflictResponse(w, r, err)
+			return
 		}
+
+		app.internalServerError(w, r, err)
 		return
 	}
 
@@ -152,12 +152,12 @@ func (app *application) loginUserHandler(w http.ResponseWriter, r *http.Request)
 	user, err := app.store.Users.GetByEmail(r.Context(), payload.Email)
 
 	if err != nil {
-		switch err {
-		case store.ErrNotFound:
+		if errors.Is(err, store.ErrNotFound) {
 			app.unauthorizedErrorResponse(w, r, err)
-		default:
-			app.internalServerError(w, r, err)
+			return
 		}
+
+		app.internalServerError(w, r, err)
 		return
 	}
 
@@ -181,7 +181,7 @@ func (app *application) loginUserHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := app.jsonResponse(w, http.StatusCreated, token); err != nil {
+	if err := app.jsonResponse(w, http.StatusOK, token); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }

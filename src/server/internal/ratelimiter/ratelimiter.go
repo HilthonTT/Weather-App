@@ -1,3 +1,4 @@
+// Package ratelimiter provides per-client request throttling.
 package ratelimiter
 
 import "time"

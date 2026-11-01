@@ -1,3 +1,4 @@
+// Package db opens the PostgreSQL connection pool.
 package db
 
 import (

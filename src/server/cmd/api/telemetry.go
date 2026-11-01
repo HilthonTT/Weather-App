@@ -7,6 +7,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+// TelemetryMiddleware starts an OpenTelemetry span for every request,
+// grouped by endpoint family.
 type TelemetryMiddleware struct {
 	tracer trace.Tracer
 }
@@ -26,7 +28,7 @@ func (tm *TelemetryMiddleware) Middleware(next http.Handler) http.Handler {
 			spanName = "user-endpoints"
 		case strings.Contains(path, "/weather/"):
 			spanName = "weather-endpoints"
-		case strings.Contains(path, "/auth/"):
+		case strings.Contains(path, "/authentication/"):
 			spanName = "auth-endpoints"
 		default:
 			spanName = "unknown-endpoints"

@@ -6,6 +6,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// JWTAuthenticator issues and validates HS256-signed JWTs.
 type JWTAuthenticator struct {
 	secret string
 	aud    string
@@ -13,7 +14,7 @@ type JWTAuthenticator struct {
 }
 
 func NewJWTAuthenticator(secret, aud, iss string) *JWTAuthenticator {
-	return &JWTAuthenticator{secret, iss, aud}
+	return &JWTAuthenticator{secret: secret, aud: aud, iss: iss}
 }
 
 func (a *JWTAuthenticator) GenerateToken(claims jwt.Claims) (string, error) {
@@ -37,7 +38,7 @@ func (a *JWTAuthenticator) ValidateToken(token string) (*jwt.Token, error) {
 	},
 		jwt.WithExpirationRequired(),
 		jwt.WithAudience(a.aud),
-		jwt.WithIssuer(a.aud),
+		jwt.WithIssuer(a.iss),
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}),
 	)
 }

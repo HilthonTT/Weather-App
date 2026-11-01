@@ -440,6 +440,9 @@ paths:
         "400":
           description: Bad Request
           schema: {}
+        "409":
+          description: Conflict
+          schema: {}
         "500":
           description: Internal Server Error
           schema: {}
@@ -495,7 +498,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieves the settings for a user by their ID
+      description: Retrieves the settings for a user by their ID. Users may only access
+        their own settings (admins may access any).
       parameters:
       - description: User ID
         in: path
@@ -512,8 +516,8 @@ paths:
         "400":
           description: Bad Request
           schema: {}
-        "404":
-          description: Not Found
+        "403":
+          description: Forbidden
           schema: {}
         "500":
           description: Internal Server Error
@@ -526,7 +530,8 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Partially updates the settings for a user.
+      description: Partially updates the settings for a user. Omitted fields are left
+        unchanged.
       parameters:
       - description: User ID
         in: path
@@ -549,6 +554,9 @@ paths:
         "400":
           description: Bad Request
           schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
         "404":
           description: Not Found
           schema: {}
@@ -558,6 +566,31 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Update user settings
+      tags:
+      - users
+  /users/activate/{token}:
+    put:
+      description: Activates a user by the token sent in the registration email
+      parameters:
+      - description: Verification token
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: User activated
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Activates/Verifies a user's email
       tags:
       - users
   /users/me:
@@ -590,7 +623,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Fetches the current weather data for a specified city
+      description: Fetches the current weather data (metric units) for a specified
+        city
       parameters:
       - description: City Name
         in: path
@@ -620,7 +654,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Fetches the current weather data for a specified latitude and longitude
+      description: Fetches the current weather data (metric units) for a specified
+        latitude and longitude
       parameters:
       - description: Latitude
         in: path
@@ -655,7 +690,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Fetches the weather forecast data for a specified city
+      description: Fetches the 5 day / 3 hour forecast (metric units) for a specified
+        city
       parameters:
       - description: City Name
         in: path
@@ -685,8 +721,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Fetches the weather forecast data for a specified latitude and
-        longitude
+      description: Fetches the 5 day / 3 hour forecast (metric units) for a specified
+        latitude and longitude
       parameters:
       - description: Latitude
         in: path
@@ -721,7 +757,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Fetches the open meteo data for a specified latitude and longitude
+      description: Fetches the Open-Meteo daily + hourly forecast for a specified
+        latitude and longitude
       parameters:
       - description: Latitude
         in: path

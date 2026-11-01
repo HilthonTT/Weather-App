@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"expvar"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -26,6 +25,7 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
+// application wires together every dependency an HTTP handler may need.
 type application struct {
 	config        config
 	store         store.Storage
@@ -36,66 +36,7 @@ type application struct {
 	mailer        mailer.Client
 }
 
-type config struct {
-	serviceName string
-	jaegerAddr  string
-	addr        string
-	db          dbConfig
-	env         string
-	apiURL      string
-	frontendURL string
-	auth        authConfig
-	redisCfg    redisConfig
-	rateLimiter ratelimiter.Config
-	openWeather openWeatherConfig
-	mail        mailConfig
-}
-
-type redisConfig struct {
-	addr    string
-	pw      string
-	db      int
-	enabled bool
-}
-
-type authConfig struct {
-	basic basicConfig
-	token tokenConfig
-}
-
-type tokenConfig struct {
-	secret string
-	exp    time.Duration
-	iss    string
-}
-
-type basicConfig struct {
-	user string
-	pass string
-}
-
-type dbConfig struct {
-	addr         string
-	maxOpenConns int
-	maxIdleConns int
-	maxIdleTime  string
-}
-
-type openWeatherConfig struct {
-	apiKey string
-}
-
-type mailConfig struct {
-	mailTrap  mailTrapConfig
-	fromEmail string
-	exp       time.Duration
-}
-
-type mailTrapConfig struct {
-	username string
-	password string
-}
-
+// mount builds the router with all middleware and routes.
 func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
 
@@ -104,12 +45,15 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
+
+	// Trace every request, including the ones rejected by the rate limiter.
+	r.Use(NewTelemetryMiddleware(otel.Tracer("dynamic-endpoints")).Middleware)
 
 	// Set a timeout value on the request context (ctx), that will signal
 	// through ctx.Done() that the request has timed out and further
@@ -120,18 +64,12 @@ func (app *application) mount() http.Handler {
 		r.Use(app.RateLimiterMiddleware)
 	}
 
-	tracer := otel.Tracer("dynamic-endpoints")
-
-	telemetryMiddleware := NewTelemetryMiddleware(tracer)
-
-	r.Use(telemetryMiddleware.Middleware)
-
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", app.healthCheckHandler)
 		r.With(app.BasicAuthMiddleware()).Get("/debug/vars", expvar.Handler().ServeHTTP)
 
-		docsURL := fmt.Sprintf("%s/swagger/doc.json", app.config.addr)
-		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
+		// Relative URL: resolves to /v1/swagger/doc.json from the UI page.
+		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("doc.json")))
 
 		r.Route("/authentication", func(r chi.Router) {
 			r.Post("/login", app.loginUserHandler)
@@ -149,18 +87,23 @@ func (app *application) mount() http.Handler {
 		})
 
 		r.Route("/users", func(r chi.Router) {
-			r.Use(app.AuthTokenMiddleware)
+			// Public: the token is the credential.
+			r.Put("/activate/{token}", app.activateUserHandler)
 
-			r.Get("/me", app.getCurrentUserHandler)
+			r.Group(func(r chi.Router) {
+				r.Use(app.AuthTokenMiddleware)
 
-			r.Route("/{userID}", func(r chi.Router) {
-				r.Get("/", app.getUserHandler)
+				r.Get("/me", app.getCurrentUserHandler)
 
-				r.Route("/settings", func(r chi.Router) {
-					r.Use(app.settingsContextMiddleware)
+				r.Route("/{userID}", func(r chi.Router) {
+					r.Get("/", app.getUserHandler)
 
-					r.Get("/", app.getSettingsHandler)
-					r.Patch("/", app.updateSettings)
+					r.Route("/settings", func(r chi.Router) {
+						r.Use(app.settingsContextMiddleware)
+
+						r.Get("/", app.getSettingsHandler)
+						r.Patch("/", app.updateSettingsHandler)
+					})
 				})
 			})
 		})
@@ -169,6 +112,8 @@ func (app *application) mount() http.Handler {
 	return r
 }
 
+// run starts the HTTP server and blocks until it is shut down gracefully on
+// SIGINT/SIGTERM.
 func (app *application) run(mux http.Handler) error {
 	// Docs
 	docs.SwaggerInfo.Version = version
