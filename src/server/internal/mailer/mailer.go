@@ -5,7 +5,6 @@ import "embed"
 
 const (
 	FromName            = "Weather"
-	maxRetries          = 3
 	UserWelcomeTemplate = "email_verification.tmpl"
 )
 
