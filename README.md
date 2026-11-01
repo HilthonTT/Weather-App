@@ -24,41 +24,8 @@ users and their display settings in PostgreSQL.
 
 ---
 
-## 🧱 Architecture
-
-```
-┌──────────────┐  HTTP/JSON  ┌──────────────────┐      ┌──────────────────────┐
-│ Flutter app  │ ──────────▶ │  Go API (:8080)  │ ───▶ │ OpenWeather / Meteo  │
-│ (Android/iOS)│             │  chi router      │      └──────────────────────┘
-└──────────────┘             │                  │ ───▶ PostgreSQL (users, settings)
-                             │                  │ ───▶ Redis (cache)
-                             └──────────────────┘ ───▶ Jaeger (traces)
-```
-
 The backend always returns **metric** values (°C, m/s); the app converts them
 to the user's preferred units.
-
-## 📁 Project structure
-
-```
-.
-├── .github/workflows/ci-cd.yml   # CI (lint/test) + CD (Docker image, APK)
-├── docker-compose.yml            # Postgres, Redis, Jaeger for local dev
-└── src/
-    ├── server/                   # Go backend  → see src/server/README.md
-    │   ├── cmd/api/              #   HTTP handlers, middleware, config, main
-    │   ├── cmd/migrate/          #   SQL migrations
-    │   ├── docs/                 #   Generated Swagger spec (make gen-docs)
-    │   └── internal/             #   auth, db, env, mailer, ratelimiter,
-    │                             #   store (+cache), tracing
-    └── client/weather_app/       # Flutter app → see src/client/weather_app/README.md
-        └── lib/
-            ├── app/              #   App root & bottom-nav shell
-            ├── common/           #   Shared constants, DI, widgets, utils
-            └── modules/          #   Feature modules (clean architecture)
-                ├── settings/     #     data / domain / presentation
-                └── weather/      #     data / domain / presentation
-```
 
 ---
 
@@ -116,21 +83,21 @@ computer's LAN IP.
 All routes are prefixed with `/v1`. Successful responses are wrapped as
 `{"data": ...}`, errors as `{"error": "..."}`.
 
-| Method | Path | Auth | Description |
-| ------ | ---- | ---- | ----------- |
-| GET | `/health` | – | Health check |
-| GET | `/weather/{city}` | – | Current weather by city |
-| GET | `/weather/coords/{lat}/{lon}` | – | Current weather by coordinates |
-| GET | `/weather/forecast/{city}` | – | 5-day / 3-hour forecast by city |
-| GET | `/weather/forecast/coords/{lat}/{lon}` | – | 5-day / 3-hour forecast by coordinates |
-| GET | `/weather/open-meteo/coords/{lat}/{lon}` | – | 7-day daily + hourly forecast |
-| POST | `/authentication/register` | – | Register (sends a verification email) |
-| POST | `/authentication/login` | – | Returns a JWT |
-| PUT | `/users/activate/{token}` | – | Verify email with the emailed token |
-| GET | `/users/me` | Bearer | Current user |
-| GET | `/users/{id}` | Bearer | User profile |
-| GET / PATCH | `/users/{id}/settings` | Bearer (owner or admin) | Read / partially update unit settings |
-| GET | `/debug/vars` | Basic | expvar metrics |
+| Method      | Path                                     | Auth                    | Description                            |
+| ----------- | ---------------------------------------- | ----------------------- | -------------------------------------- |
+| GET         | `/health`                                | –                       | Health check                           |
+| GET         | `/weather/{city}`                        | –                       | Current weather by city                |
+| GET         | `/weather/coords/{lat}/{lon}`            | –                       | Current weather by coordinates         |
+| GET         | `/weather/forecast/{city}`               | –                       | 5-day / 3-hour forecast by city        |
+| GET         | `/weather/forecast/coords/{lat}/{lon}`   | –                       | 5-day / 3-hour forecast by coordinates |
+| GET         | `/weather/open-meteo/coords/{lat}/{lon}` | –                       | 7-day daily + hourly forecast          |
+| POST        | `/authentication/register`               | –                       | Register (sends a verification email)  |
+| POST        | `/authentication/login`                  | –                       | Returns a JWT                          |
+| PUT         | `/users/activate/{token}`                | –                       | Verify email with the emailed token    |
+| GET         | `/users/me`                              | Bearer                  | Current user                           |
+| GET         | `/users/{id}`                            | Bearer                  | User profile                           |
+| GET / PATCH | `/users/{id}/settings`                   | Bearer (owner or admin) | Read / partially update unit settings  |
+| GET         | `/debug/vars`                            | Basic                   | expvar metrics                         |
 
 See the Swagger UI for request/response schemas.
 
@@ -148,18 +115,18 @@ cd src/client/weather_app && flutter test
 [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml) runs on every
 push and pull request:
 
-| Job | What it does |
-| --- | ------------ |
-| **Server · lint & test** | `gofmt`, `go mod tidy` check, `go vet`, `go test -race`, build |
-| **Server · Docker build** | Builds `src/server/Dockerfile` |
-| **Client · analyze & test** | `flutter analyze`, `flutter test` |
+| Job                         | What it does                                                   |
+| --------------------------- | -------------------------------------------------------------- |
+| **Server · lint & test**    | `gofmt`, `go mod tidy` check, `go vet`, `go test -race`, build |
+| **Server · Docker build**   | Builds `src/server/Dockerfile`                                 |
+| **Client · analyze & test** | `flutter analyze`, `flutter test`                              |
 
 On pushes to `main` and on `v*` tags, once CI is green:
 
-| Job | What it does |
-| --- | ------------ |
-| **Publish server image** | Pushes `ghcr.io/<owner>/weather-api` (`latest`, `sha-…`, semver tags) |
-| **Build Android APK** | Builds a release APK, uploads it as a workflow artifact, and attaches it to the GitHub Release for tags |
+| Job                      | What it does                                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------------- |
+| **Publish server image** | Pushes `ghcr.io/<owner>/weather-api` (`latest`, `sha-…`, semver tags)                                   |
+| **Build Android APK**    | Builds a release APK, uploads it as a workflow artifact, and attaches it to the GitHub Release for tags |
 
 Set the repository **variable** `API_URL` (Settings → Secrets and variables →
 Actions → Variables) to the public URL of your deployed backend so the APK
